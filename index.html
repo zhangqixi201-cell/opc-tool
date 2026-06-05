@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OPC Fork Protocol - 可验证的一人公司分叉协议</title>
+  <style>
+    :root {
+      --bg: #080a0f; --panel: #11151d; --panel2: #161b25; --line: #283142;
+      --text: #f4f7fb; --muted: #8d98aa; --green: #65f5ae; --violet: #a78bfa;
+      --orange: #ffb86b; --blue: #63b3ff; --red: #ff7c91;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background:
+      radial-gradient(circle at 15% 0%, #18213a 0, transparent 32%),
+      radial-gradient(circle at 95% 10%, #24183a 0, transparent 25%), var(--bg);
+      font: 14px/1.55 Inter, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1180px; margin: auto; padding: 0 22px 60px; }
+    nav { height: 68px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #ffffff12; position: sticky; top: 0; z-index: 5;
+      backdrop-filter: blur(18px); background: #080a0fcc; }
+    .brand { display: flex; gap: 11px; align-items: center; font-weight: 800; letter-spacing: -.3px; }
+    .logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+      background: var(--green); color: #07130d; box-shadow: 0 0 30px #65f5ae55; }
+    .badge, .tag { border: 1px solid var(--line); background: #ffffff08; border-radius: 999px;
+      padding: 4px 9px; color: var(--muted); font-size: 11px; }
+    .badge b { color: var(--green); }
+    header { padding: 58px 0 34px; }
+    h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.02; margin: 14px 0 18px; letter-spacing: -3px; }
+    h1 span { color: var(--green); }
+    .lead { color: #b2bccb; font-size: 17px; max-width: 650px; }
+    .thesis { border: 1px solid #65f5ae44; padding: 18px; border-radius: 16px; background: #65f5ae0b; }
+    .thesis strong { color: var(--green); display: block; margin-bottom: 5px; }
+    .tabs { display: flex; gap: 7px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+    .tab { color: var(--muted); border: 0; background: none; padding: 12px 14px; border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--text); border-color: var(--green); }
+    .page { display: none; }
+    .page.active { display: block; animation: show .25s ease; }
+    @keyframes show { from { opacity: 0; transform: translateY(5px); } }
+    .grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 18px; }
+    .card { border: 1px solid var(--line); background: linear-gradient(145deg, #121720e8, #0d1118e8);
+      border-radius: 18px; padding: 20px; box-shadow: 0 14px 50px #00000030; }
+    .card h2, .card h3 { margin: 0 0 5px; letter-spacing: -.3px; }
+    .sub { color: var(--muted); font-size: 12px; margin: 0 0 17px; }
+    label { display: block; color: #aeb8c6; font-size: 12px; margin: 13px 0 6px; }
+    input, select, textarea { width: 100%; color: var(--text); border: 1px solid var(--line); background: #090c12;
+      padding: 11px 12px; border-radius: 10px; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); }
+    textarea { resize: vertical; min-height: 72px; }
+    option { background: #11151d; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .primary { width: 100%; margin-top: 17px; padding: 12px; border: 0; border-radius: 11px; font-weight: 800;
+      color: #07130d; background: var(--green); box-shadow: 0 0 24px #65f5ae33; }
+    .primary:hover { transform: translateY(-1px); }
+    .output-empty { min-height: 520px; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .output-empty .circle { width: 74px; height: 74px; margin: auto auto 14px; border: 1px dashed #65f5ae77;
+      border-radius: 50%; display: grid; place-items: center; color: var(--green); font-size: 24px; }
+    .hidden { display: none !important; }
+    .fork-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; border-bottom: 1px solid var(--line); padding-bottom: 15px; }
+    .fork-id { color: var(--green); font: 11px ui-monospace, monospace; }
+    .score { text-align: right; white-space: nowrap; }
+    .score strong { color: var(--green); font-size: 24px; display: block; }
+    .section { margin-top: 18px; }
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-weight: 800; }
+    .section-title i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .dna { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .gene { padding: 10px; background: #ffffff07; border: 1px solid #ffffff0e; border-radius: 10px; font-size: 11px; }
+    .gene b { display: block; color: var(--violet); margin-bottom: 2px; }
+    .diff { display: grid; grid-template-columns: 1fr 24px 1fr; align-items: center; gap: 6px;
+      background: #ffffff06; padding: 11px; border-radius: 10px; font-size: 11px; }
+    .diff .to { color: var(--green); }
+    .tasks { display: grid; gap: 7px; }
+    .task { display: grid; grid-template-columns: 32px 1fr auto; gap: 9px; align-items: center; border: 1px solid var(--line);
+      background: #ffffff05; padding: 9px; border-radius: 10px; }
+    .day { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: #a78bfa19; color: var(--violet); font-weight: 800; }
+    .task small { display: block; color: var(--muted); }
+    .metric { color: var(--orange); font-size: 11px; }
+    .protocol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .protocol-grid .card { min-height: 160px; }
+    .num { font: 800 30px ui-monospace, monospace; color: var(--green); opacity: .75; }
+    pre { white-space: pre-wrap; color: #cbd5e1; background: #090c12; border: 1px solid var(--line); padding: 15px; border-radius: 12px; font-size: 11px; overflow: auto; }
+    .spec-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+    .stat b { display: block; font-size: 25px; color: var(--green); }
+    .lineage { display: flex; gap: 8px; align-items: center; overflow-x: auto; padding: 8px 0 3px; }
+    .node { min-width: 185px; border: 1px solid var(--line); border-radius: 11px; padding: 11px; background: #ffffff05; }
+    .node b { display: block; margin-bottom: 2px; }
+    .arrow { color: var(--green); }
+    .callout { margin-top: 18px; padding: 13px; border-left: 3px solid var(--orange); background: #ffb86b0c; color: #cbd3df; }
+    .action-row { display: flex; gap: 8px; margin-top: 15px; }
+    .ghost { border: 1px solid var(--line); background: #ffffff08; color: var(--text); padding: 8px 10px; border-radius: 9px; font-size: 11px; }
+    details.card { margin-top: 14px; }
+    details summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; justify-content: space-between; }
+    details summary::after { content: "展开"; color: var(--green); font-size: 11px; font-weight: 500; }
+    details[open] summary::after { content: "收起"; }
+    .library { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+    .library-card { border: 1px solid var(--line); background: #ffffff05; border-radius: 12px; padding: 13px; }
+    .library-card.user { border-color: #65f5ae55; }
+    .library-card h4 { margin: 0 0 3px; }
+    .library-card .action-row { margin-top: 9px; }
+    .suggestions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .suggestion { text-align: left; border: 1px solid var(--line); background: #ffffff05; color: var(--text); border-radius: 10px; padding: 10px; }
+    .suggestion:hover { border-color: var(--green); }
+    .suggestion b { display: block; color: var(--blue); margin-bottom: 3px; }
+    .status { color: var(--green); font-size: 11px; margin-top: 9px; min-height: 17px; }
+    .audit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .audit-item { border: 1px solid var(--line); background: #ffffff05; border-radius: 10px; padding: 9px; font-size: 11px; }
+    .audit-item b { color: var(--blue); display: block; margin-bottom: 2px; }
+    .audit-item.pass { border-color: #65f5ae44; }
+    .audit-item.warn { border-color: #ffb86b55; }
+    .quality-score { display: flex; gap: 14px; align-items: center; padding: 13px; background: #65f5ae0b; border: 1px solid #65f5ae44; border-radius: 12px; }
+    .quality-score strong { font-size: 30px; color: var(--green); }
+    .boundary { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 9px; }
+    .boundary div { border-radius: 9px; padding: 9px; font-size: 11px; background: #ffffff05; }
+    .boundary b { display: block; margin-bottom: 3px; }
+    .boundary .fit b { color: var(--green); } .boundary .fail b { color: var(--red); }
+    .review-form { display: grid; gap: 8px; }
+    .review-form textarea { min-height: 58px; }
+    footer { color: #596579; border-top: 1px solid #ffffff0c; margin-top: 45px; padding: 22px 0; font-size: 11px; display: flex; justify-content: space-between; }
+    @media (max-width: 800px) {
+      header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top { grid-template-columns: 1fr; }
+      .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <nav>
+    <div class="brand"><span class="logo">FP</span> OPC Fork Protocol <span class="tag">v0.2 MVP</span></div>
+    <span class="badge"><b>●</b> 不是生成答案，而是启动可验证实验</span>
+  </nav>
+
+  <header>
+    <div>
+      <span class="badge">开放一人公司操作系统</span>
+      <h1>别从零创业，<br><span>Fork 一个已验证的开始。</span></h1>
+      <div class="lead">把一个人的获客、交付、定价与时间管理，封装成可分叉、可追溯、可验证的经营实验。</div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-page="lab">Fork Lab</button>
+    <button class="tab" data-page="specimen">母本标本</button>
+    <button class="tab" data-page="protocol">OPC-1.0 协议</button>
+  </div>
+
+  <main id="lab" class="page active">
+    <div class="grid">
+      <section class="card">
+        <h2>生成第一个可验证分叉</h2>
+        <p class="sub">只生成 7 天内能跑完的最小经营实验。</p>
+        <label>选择母本</label>
+        <select id="parent-select"></select>
+        <label>你是谁</label>
+        <input id="identity" value="会写代码的英语老师">
+        <label>你准备出售的能力</label>
+        <input id="skill" value="用工程思维拆解高中英语阅读">
+        <label>第一批服务对象</label>
+        <input id="audience" value="英语 80-100 分的高二学生">
+        <div class="row">
+          <div><label>每周可投入</label><select id="hours"><option value="5">5 小时</option><option selected value="10">10 小时</option><option value="20">20 小时</option></select></div>
+          <div><label>7 天目标</label><select id="goal"><option value="1">拿到 1 个付费客户</option><option value="3">完成 3 次访谈</option><option value="5">招募 5 个体验用户</option></select></div>
+        </div>
+        <label>最大风险假设</label>
+        <select id="risk"><option value="trust">客户不相信我值得付费</option><option value="need">客户可能根本没有这个需求</option><option value="delivery">我可能无法稳定交付结果</option></select>
+        <button class="primary" id="generate">Fork 母本，生成 7 天实验 →</button>
+      </section>
+
+      <section class="card">
+        <div id="empty" class="output-empty"><div><div class="circle">⑂</div><b>等待 Fork</b><p>左侧填写你的变异条件<br>右侧将生成实验包与可追溯谱系</p></div></div>
+        <div id="result" class="hidden"></div>
+      </section>
+    </div>
+  </main>
+
+  <main id="specimen" class="page">
+    <div class="spec-top">
+      <div class="card stat"><span class="sub">母本总数</span><b id="specimen-count">01</b>默认母本 + 用户新增</div>
+      <div class="card stat"><span class="sub">用户新增标本</span><b id="user-count">00</b>保存在当前浏览器</div>
+      <div class="card stat"><span class="sub">可信度</span><b>72%</b>基于证据动态变化</div>
+    </div>
+    <section class="card">
+      <h2>opc-edu-zhangqi-v1.0</h2>
+      <p class="sub">母本不是成功学案例，而是一组带适用边界和证据等级的经营基因。</p>
+      <div class="dna">
+        <div class="gene"><b>ACQUIRE / 获客</b>诊断问卷作为首个价值交换</div>
+        <div class="gene"><b>DELIVER / 交付</b>45 分钟诊断式体验课</div>
+        <div class="gene"><b>PRICE / 定价</b>按结果风险与交付复杂度定价</div>
+        <div class="gene"><b>CAPACITY / 产能</b>同时服务不超过 5 人</div>
+      </div>
+      <div class="section">
+        <div class="section-title"><i></i>谱系让经验产生网络效应</div>
+        <div class="lineage" id="lineage">
+          <div class="node"><b>英语私教 v1.0</b><span class="sub">母本 · 12 次交付</span></div><span class="arrow">→</span>
+          <div class="node"><b>钢琴陪练 v1.1</b><span class="sub">变异 · 获客转化 +18%</span></div><span class="arrow">→</span>
+          <div class="node"><b>作品集辅导 v1.2</b><span class="sub">变异 · 客单价 +35%</span></div>
+        </div>
+      </div>
+      <div class="callout"><b>协议的飞轮：</b>每个分叉者都贡献“什么场景下，哪种变异有效或失败”。标本库因此不是素材库，而是集体经营知识库。</div>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <h2>裂变模拟器</h2>
+      <p class="sub">基于当前选中的母本，快速查看三种变异方向；点击建议可带入 Fork Lab。</p>
+      <div id="simulator" class="suggestions"></div>
+    </section>
+    <details class="card">
+      <summary>新增母本标本</summary>
+      <p class="sub" style="margin-top:8px">把你的真实经验封装为下一位 Fork 者可复用的起点。数据仅保存在当前浏览器。</p>
+      <div class="row">
+        <div><label>标本名称</label><input id="sp-name" placeholder="例如：独立设计顾问 v1.0"></div>
+        <div><label>作者身份</label><input id="sp-author" placeholder="例如：有 5 年经验的产品设计师"></div>
+      </div>
+      <div class="row">
+        <div><label>核心技能</label><input id="sp-skill" placeholder="例如：为 SaaS 做转化页设计"></div>
+        <div><label>客群</label><input id="sp-audience" placeholder="例如：早期 SaaS 创始人"></div>
+      </div>
+      <label>最小可执行动作</label><input id="sp-action" placeholder="例如：完成一次 30 分钟页面诊断">
+      <div class="row">
+        <div><label>成功指标</label><input id="sp-metric" placeholder="例如：获得 1 个付费诊断"></div>
+        <div><label>证据记录</label><input id="sp-evidence" placeholder="例如：已完成 8 次付费交付"></div>
+      </div>
+      <div class="row">
+        <div><label>适用条件</label><textarea id="sp-fit" placeholder="例如：有公开案例；7 天能接触至少 3 个潜客"></textarea></div>
+        <div><label>不适用条件 / 失败信号</label><textarea id="sp-fail" placeholder="例如：邀约 10 人仍 0 回复；体验后无人愿意继续"></textarea></div>
+      </div>
+      <button class="primary" id="add-specimen">提交并加入母本库</button>
+      <div id="add-status" class="status"></div>
+    </details>
+    <section class="card" style="margin-top:14px">
+      <h2>浏览器母本库</h2>
+      <p class="sub">默认母本、手动新增标本和 Fork 保存的新母本都会出现在这里。</p>
+      <div id="library" class="library"></div>
+    </section>
+  </main>
+
+  <main id="protocol" class="page">
+    <div class="protocol-grid">
+      <div class="card"><span class="num">01</span><h3>可执行</h3><p class="sub">每个 Fork 必须包含 7 天内能完成的行动，不接受只有理念的模板。</p></div>
+      <div class="card"><span class="num">02</span><h3>可追溯</h3><p class="sub">保留母本 ID、修改字段与修改理由，形成经营模式谱系。</p></div>
+      <div class="card"><span class="num">03</span><h3>可验证</h3><p class="sub">每个行动绑定指标与通过阈值，失败结果同样回流标本库。</p></div>
+    </div>
+    <section class="card" style="margin-top:14px">
+      <h2>最小协议对象</h2>
+      <p class="sub">这是 OPC Fork 与普通提示词、课程模板最本质的区别。</p>
+      <pre>{
+  "fork_id": "opc-reading-demo-v0.1",
+  "parent": "opc-edu-zhangqi-v1.0",
+  "hypothesis": "诊断体验能建立足够的付费信任",
+  "mutation": { "audience": "高二学生", "offer": "阅读诊断体验" },
+  "experiment": { "window_days": 7, "budget_hours": 10 },
+  "success_metric": { "name": "付费客户数", "threshold": 1 },
+  "evidence": [],
+  "license": "OPC-1.0"
+}</pre>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <h2>协议审查闭环</h2>
+      <p class="sub">OPC-1.0 不只生成行动，也审查行动，并要求失败结果回流。</p>
+      <div class="lineage">
+        <div class="node"><b>Fork</b><span class="sub">继承母本与边界</span></div><span class="arrow">→</span>
+        <div class="node"><b>Run + Prove</b><span class="sub">执行并提交证据</span></div><span class="arrow">→</span>
+        <div class="node"><b>Review + Repair</b><span class="sub">评分、复盘、修复</span></div><span class="arrow">→</span>
+        <div class="node"><b>Save + Fork Again</b><span class="sub">成为下一代母本</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>OPC Fork Protocol · Hackathon MVP</span><span>Fork → Mutate → Run → Prove → Share</span></footer>
+</div>
+<script>
+  const $ = id => document.getElementById(id);
+  const STORAGE_KEY = 'opc-fork-protocol-specimens-v1';
+  const defaultSpecimens = [
+    {
+      id: 'opc-edu-zhangqi-v1.0', name: '教育服务型 OPC', author: '会写代码的英语老师',
+      skill: '用工程思维拆解高中英语阅读', audience: '英语 80-100 分的高二学生',
+      action: '完成一次 45 分钟诊断式体验课', metric: '拿到 1 个付费客户', evidence: '12 次真实付费交付',
+      fit: '有可证明的学习成果；能一对一沟通；7 天能找到至少 3 个潜客',
+      fail: '没有可信背书；客群没有明确痛点；无法稳定交付', parent: '', source: 'default'
+    },
+    {
+      id: 'opc-skill-python-v1.0', name: '技能陪跑型 OPC', author: '有项目经验的技能教练',
+      skill: '带用户完成一个可展示的 Python 小项目', audience: '准备转码但没有项目经验的非科班大二/大三学生',
+      action: '完成一次项目选题诊断并定义最小作品', metric: '7 天产出 1 个可展示作品', evidence: '母本验证重点：最小作品产出',
+      fit: '技能能产生可展示作品；用户有固定练习时间；能提供逐步反馈',
+      fail: '只卖知识不带产出；目标过大；用户没有执行时间', parent: '', source: 'default'
+    },
+    {
+      id: 'opc-creative-portfolio-v1.0', name: '创作服务型 OPC', author: '有公开作品的创作者',
+      skill: '提供账号内容与作品集诊断', audience: '准备求职或经营内容账号的初级创作者',
+      action: '完成一次作品集或账号诊断并给出改版清单', metric: '获得 1 次付费诊断或明确推荐', evidence: '母本验证重点：账号与作品反馈',
+      fit: '有公开作品案例；能快速指出表达问题；客群有发布或求职节点',
+      fail: '没有公开案例；只给审美意见；体验后没有下一步动作', parent: '', source: 'default'
+    }
+  ];
+  const defaultSpecimen = defaultSpecimens[0];
+  let specimens = loadSpecimens();
+  let currentFork = null;
+
+  function loadSpecimens() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      return [...defaultSpecimens, ...saved.filter(item => !defaultSpecimens.some(base => base.id === item.id))];
+    } catch (_) {
+      return [...defaultSpecimens];
+    }
+  }
+
+  function saveSpecimens() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(specimens.filter(item => item.source !== 'default')));
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => tab.onclick = () => {
+    document.querySelectorAll('.tab,.page').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active'); $(tab.dataset.page).classList.add('active');
+  });
+
+  const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const makeId = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+  const selectedSpecimen = () => specimens.find(item => item.id === $('parent-select').value) || defaultSpecimen;
+
+  function switchPage(page) {
+    document.querySelectorAll('.tab,.page').forEach(x => x.classList.remove('active'));
+    document.querySelector(`.tab[data-page="${page}"]`).classList.add('active');
+    $(page).classList.add('active');
+  }
+
+  function renderAll() {
+    const selectedId = $('parent-select').value || defaultSpecimen.id;
+    $('parent-select').innerHTML = specimens.map(item =>
+      `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${item.source === 'default' ? ' · 默认' : ' · 用户新增'}</option>`
+    ).join('');
+    $('parent-select').value = specimens.some(item => item.id === selectedId) ? selectedId : defaultSpecimen.id;
+    $('specimen-count').textContent = String(specimens.length).padStart(2, '0');
+    $('user-count').textContent = String(specimens.filter(item => item.source !== 'default').length).padStart(2, '0');
+    renderLibrary();
+    renderLineage();
+    renderSimulator();
+  }
+
+  function renderLibrary() {
+    $('library').innerHTML = specimens.map(item => `
+      <article class="library-card ${item.source === 'default' ? '' : 'user'}">
+        <span class="tag">${item.source === 'default' ? '已验证母本' : '用户新增标本'}</span>
+        <h4>${escapeHtml(item.name)}</h4>
+        <p class="sub">${escapeHtml(item.author)} · ${escapeHtml(item.audience)}</p>
+        <div class="gene"><b>最小动作</b>${escapeHtml(item.action)}</div>
+        <p class="sub" style="margin:8px 0 0">指标：${escapeHtml(item.metric)} · 证据：${escapeHtml(item.evidence)}</p>
+        <div class="boundary">
+          <div class="fit"><b>适用条件</b>${escapeHtml(item.fit || '具备相关能力、可接触目标客群、能完成最小交付')}</div>
+          <div class="fail"><b>失败信号</b>${escapeHtml(item.fail || '邀约无回复、用户不愿继续、交付后没有下一步行动')}</div>
+        </div>
+        <div class="action-row"><button class="ghost use-specimen" data-id="${escapeHtml(item.id)}">在 Fork Lab 使用</button></div>
+      </article>`).join('');
+    document.querySelectorAll('.use-specimen').forEach(button => button.onclick = () => {
+      $('parent-select').value = button.dataset.id;
+      applyParent();
+      switchPage('lab');
+    });
+  }
+
+  function renderLineage() {
+    const fixed = [
+      '<div class="node"><b>英语私教 v1.0</b><span class="sub">母本 · 12 次交付</span></div>',
+      '<span class="arrow">→</span><div class="node"><b>钢琴陪练 v1.1</b><span class="sub">变异 · 获客转化 +18%</span></div>',
+      '<span class="arrow">→</span><div class="node"><b>作品集辅导 v1.2</b><span class="sub">变异 · 客单价 +35%</span></div>'
+    ];
+    const userNodes = specimens.filter(item => item.source !== 'default').map(item =>
+      `<span class="arrow">→</span><div class="node"><b>${escapeHtml(item.name)}</b><span class="sub">用户新增标本 · ${escapeHtml(item.parent || '独立母本')}</span></div>`
+    );
+    $('lineage').innerHTML = [...fixed, ...userNodes].join('');
+  }
+
+  function renderSimulator() {
+    const parent = selectedSpecimen();
+    const ideas = [
+      ['人群变异', `${parent.audience} 的更窄细分人群`, `保留“${parent.skill}”，先只服务一个更具体、痛点更急的人群。`],
+      ['交付变异', `把服务压缩为一次诊断`, `将“${parent.action}”拆成低门槛体验，优先验证付费意愿。`],
+      ['资产变异', `把经验变成自助诊断包`, `把重复讲解沉淀成问卷、清单或模板，测试非同步交付。`]
+    ];
+    $('simulator').innerHTML = ideas.map((idea, index) => `
+      <button class="suggestion" data-index="${index}"><b>${idea[0]}</b>${escapeHtml(idea[1])}<span class="sub">${escapeHtml(idea[2])}</span></button>
+    `).join('');
+    document.querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
+      const index = +button.dataset.index;
+      if (index === 0) $('audience').value = `${parent.audience}中的高意愿细分用户`;
+      if (index === 1) $('skill').value = `${parent.skill}诊断服务`;
+      if (index === 2) $('skill').value = `${parent.skill}自助工具包`;
+      switchPage('lab');
+    });
+  }
+
+  function applyParent() {
+    const parent = selectedSpecimen();
+    $('identity').value = parent.author;
+    $('skill').value = parent.skill;
+    $('audience').value = parent.audience;
+    renderSimulator();
+  }
+
+  $('parent-select').onchange = applyParent;
+
+  $('add-specimen').onclick = () => {
+    const fields = {
+      name: $('sp-name').value.trim(), author: $('sp-author').value.trim(),
+      skill: $('sp-skill').value.trim(), audience: $('sp-audience').value.trim(),
+      action: $('sp-action').value.trim(), metric: $('sp-metric').value.trim(),
+      evidence: $('sp-evidence').value.trim(), fit: $('sp-fit').value.trim(), fail: $('sp-fail').value.trim()
+    };
+    if (!fields.name || !fields.skill || !fields.audience || !fields.action || !fields.metric) {
+      $('add-status').textContent = '请至少填写标本名称、核心技能、客群、最小动作和成功指标。';
+      return;
+    }
+    const item = { id: makeId('opc-user'), ...fields, author: fields.author || '匿名 OPC 创作者',
+      evidence: fields.evidence || '等待验证', fit: fields.fit || '具备相关能力并能触达首批客群',
+      fail: fields.fail || '邀约无回复、体验后无人愿意继续', parent: '', source: 'user' };
+    specimens.push(item);
+    saveSpecimens();
+    renderAll();
+    $('parent-select').value = item.id;
+    renderSimulator();
+    $('add-status').textContent = `已加入母本库：${item.name}`;
+    ['sp-name','sp-author','sp-skill','sp-audience','sp-action','sp-metric','sp-evidence','sp-fit','sp-fail'].forEach(id => $(id).value = '');
+  };
+
+  function auditExperiment(parent, skill, audience, hours, risk, target) {
+    const vagueAudience = audience.length < 10 || /大学生|年轻人|所有人|职场人|创业者$/.test(audience);
+    const vagueSkill = skill.length < 10 || /写代码|设计|英语|赚钱|做内容$/.test(skill);
+    const parentChanged = skill !== parent.skill || audience !== parent.audience;
+    const dimensions = [
+      ['可执行性', hours >= 5, `7 天内有 ${hours} 小时预算`],
+      ['可验证性', Boolean(risk[2] && target), `指标：${risk[2]} ≥ ${target}`],
+      ['客群清晰度', !vagueAudience, vagueAudience ? '客群仍然太宽泛' : `首批客群：${audience}`],
+      ['付费路径', !vagueSkill, vagueSkill ? '出售能力仍是宽泛名词' : '通过最小诊断或体验验证付费'],
+      ['母本继承度', true, `继承 ${parent.name} 的最小实验结构`],
+      ['变异合理性', parentChanged, parentChanged ? '已发生真实场景适配' : '与母本完全相同，尚未产生变异'],
+      ['证据回流', true, 'D7 已设置证据提交与复盘动作']
+    ];
+    const score = dimensions.reduce((sum, item) => sum + (item[1] ? 14 : 6), 0) + 2;
+    const repairs = [];
+    if (vagueAudience) repairs.push(`把“${audience}”缩小到一个有明确阶段、痛点或时间节点的人群。`);
+    if (vagueSkill) repairs.push(`把“${skill}”改写成可交付结果，例如“7 天完成一个可展示的小项目”。`);
+    if (!parentChanged) repairs.push('至少修改母本的人群、交付或资产形态之一，并记录修改理由。');
+    if (!repairs.length) repairs.push('结构已通过基础质检；下一步重点是获取真实反馈，而不是继续修改文案。');
+    return { dimensions, score: Math.min(score, 100), repairs };
+  }
+
+  $('generate').onclick = () => {
+    const parent = selectedSpecimen();
+    const identityRaw = $('identity').value || '未命名创作者';
+    const skillRaw = $('skill').value || '你的核心能力';
+    const audienceRaw = $('audience').value || '第一批客户';
+    const identity = escapeHtml(identityRaw), skill = escapeHtml(skillRaw), audience = escapeHtml(audienceRaw);
+    const hours = +$('hours').value, target = +$('goal').value;
+    const goalText = $('goal').selectedOptions[0].text;
+    const riskMap = {
+      trust: ['客户是否愿意为你的能力付费', '先卖诊断，不先卖完整课程', '付费客户数'],
+      need: ['客户是否真的急需解决这个问题', '先做问题访谈，不急着做产品', '有效访谈数'],
+      delivery: ['你是否能稳定交付可感知结果', '先做一次最小体验交付', '体验后推荐意愿']
+    };
+    const risk = riskMap[$('risk').value];
+    const audit = auditExperiment(parent, skillRaw, audienceRaw, hours, risk, target);
+    const slug = Math.random().toString(36).slice(2, 6);
+    const forkId = `opc-${slug}-v0.1`;
+    const tasks = [
+      ['1', '写出一页诊断问卷', `列出 ${audience} 最常见的 5 个问题`, '完成 1 份'],
+      ['2', '发布一条问题型内容', `邀请目标用户领取“${skill}诊断”`, '获得 3 个回复'],
+      ['3', '完成第一次诊断', '只记录原话、痛点频率与现有替代方案', '完成 1 次'],
+      ['4', '变异母本话术', `把“${escapeHtml(parent.name)}”改写成适合 ${audience} 的版本`, '产出 1 个变异'],
+      ['5', '提出最小付费邀约', `用 ${Math.max(1, Math.round(hours * .2))} 小时可交付的结果做报价`, `完成 ${target} 次邀约`],
+      ['7', '提交证据并决定', '记录通过/失败，决定继续、变异或终止', goalText]
+    ];
+    $('empty').classList.add('hidden'); $('result').classList.remove('hidden');
+    $('result').innerHTML = `
+      <div class="fork-head"><div><div class="fork-id">${forkId} ← ${escapeHtml(parent.id)}</div>
+      <h2>${skill}</h2><p class="sub">${identity} · ${audience} · 7 天 / ${hours} 小时</p></div>
+      <div class="score"><strong>46%</strong><span class="sub">初始可信度</span></div></div>
+      <div class="section"><div class="section-title"><i></i>这次 Fork 要验证什么</div>
+      <div class="gene"><b style="color:var(--orange)">最大风险假设</b>${risk[0]}。策略：${risk[1]}。唯一北极星指标：<span style="color:var(--green)">${risk[2]}</span>。</div></div>
+      <div class="section"><div class="section-title"><i></i>变异记录 Mutation Diff</div>
+      <div class="diff"><span>${escapeHtml(parent.skill)}<br>${escapeHtml(parent.audience)}<br><small class="sub">母本条件</small></span><span class="arrow">→</span><span class="to">${skill}<br>${audience}</span></div></div>
+      <div class="section"><div class="section-title"><i></i>7 天最小经营实验</div>
+      <div class="tasks">${tasks.map(t => `<div class="task"><span class="day">D${t[0]}</span><span><b>${t[1]}</b><small>${t[2]}</small></span><span class="metric">${t[3]}</span></div>`).join('')}</div></div>
+      <div class="section"><div class="section-title"><i></i>系统质检与实验质量评分</div>
+      <div class="quality-score"><strong>${audit.score} / 100</strong><span><b>OPC 实验分</b><br><small class="sub">生成后自动审查，不让宽泛方案直接进入执行。</small></span></div>
+      <div class="audit-grid" style="margin-top:8px">${audit.dimensions.map(d => `<div class="audit-item ${d[1] ? 'pass' : 'warn'}"><b>${d[1] ? '✓' : '△'} ${d[0]}</b>${escapeHtml(d[2])}</div>`).join('')}</div>
+      <div class="gene" style="margin-top:8px"><b style="color:var(--orange)">自动修复建议</b>${audit.repairs.map((r, i) => `${i + 1}. ${escapeHtml(r)}`).join('<br>')}
+      <button class="ghost" id="apply-repair" style="margin-top:8px">应用修复并重新质检</button></div></div>
+      <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>
+      <div class="action-row"><button class="ghost" id="prove">+ 提交一次验证证据</button><button class="ghost" id="export">导出协议 JSON</button><button class="ghost" id="save-parent">保存为新母本</button></div>
+      <div id="fork-status" class="status"></div>
+      <div id="review-panel" class="section hidden"><div class="section-title"><i></i>7 天后复盘</div>
+        <div class="review-form">
+          <textarea id="rv-did" placeholder="我做了什么？例如：发布 2 条内容、私信 10 人、完成 2 次诊断"></textarea>
+          <textarea id="rv-feedback" placeholder="得到了什么反馈？"></textarea>
+          <textarea id="rv-proved" placeholder="哪个假设被验证？"></textarea>
+          <textarea id="rv-failed" placeholder="哪个假设失败？"></textarea>
+          <textarea id="rv-next" placeholder="下一步怎么变异？"></textarea>
+          <button class="primary" id="finish-review">完成复盘并更新证据</button>
+        </div>
+      </div>`;
+    currentFork = { id: forkId, parent: parent.id, identity: identityRaw, skill: skillRaw, audience: audienceRaw,
+      action: tasks[4][1] + '：' + tasks[4][2], metric: risk[2], evidence: '等待验证',
+      experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null };
+    $('fork-simulator').innerHTML = $('simulator').innerHTML;
+    $('fork-simulator').querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
+      const index = +button.dataset.index;
+      $('fork-status').textContent = index === 0
+        ? `行动建议：从“${parent.audience}”中选择痛点最急的一类人，先访谈 3 位。`
+        : index === 1
+          ? `行动建议：把“${parent.action}”压缩成一次可收费的最小诊断。`
+          : `行动建议：把重复交付步骤沉淀成一份用户可自行完成的工具包。`;
+    });
+    $('apply-repair').onclick = () => {
+      if (audit.dimensions[2][1] === false) $('audience').value = `正在准备相关行动、且 30 天内有明确目标的${audienceRaw}`;
+      if (audit.dimensions[3][1] === false) $('skill').value = `7 天完成一个可展示的${skillRaw}成果`;
+      if (audit.dimensions[5][1] === false) $('audience').value = `${audienceRaw}中的高意愿细分用户`;
+      $('fork-status').textContent = '已把修复建议带回左侧输入，请再次点击生成完成重新质检。';
+    };
+    $('prove').onclick = () => {
+      $('review-panel').classList.remove('hidden');
+      $('prove').textContent = '正在填写 7 天复盘';
+    };
+    $('finish-review').onclick = () => {
+      const review = { did: $('rv-did').value.trim(), feedback: $('rv-feedback').value.trim(),
+        proved: $('rv-proved').value.trim(), failed: $('rv-failed').value.trim(), next: $('rv-next').value.trim() };
+      if (!review.did || !review.feedback || !review.next) {
+        $('fork-status').textContent = '请至少填写做了什么、得到的反馈和下一步变异。';
+        return;
+      }
+      currentFork.review = review;
+      currentFork.evidence = review.feedback;
+      document.querySelector('.score strong').textContent = '58%';
+      $('prove').textContent = '✓ 已完成复盘，可信度 +12%';
+      $('review-panel').classList.add('hidden');
+      $('fork-status').textContent = '复盘已记录：Fork → Run → Prove → Review → Save as Specimen → Fork Again';
+    };
+    $('export').onclick = () => {
+      const data = {fork_id:forkId,parent:parent.id,identity:identityRaw,skill:skillRaw,audience:audienceRaw,
+        experiment:{window_days:7,budget_hours:hours},hypothesis:risk[0],success_metric:{name:risk[2],threshold:target},
+        audit:{score:audit.score,repairs:audit.repairs},review:currentFork.review,license:'OPC-1.0'};
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+      a.download = `${forkId}.json`; a.click(); URL.revokeObjectURL(a.href);
+    };
+    $('save-parent').onclick = () => {
+      if (!currentFork.review) {
+        $('fork-status').textContent = '请先提交验证证据并完成 7 天复盘，再保存为新母本。';
+        return;
+      }
+      if (specimens.some(item => item.id === currentFork.id)) {
+        $('fork-status').textContent = '这个 Fork 已经保存为母本。';
+        return;
+      }
+      specimens.push({ id: currentFork.id, name: `${currentFork.skill} v0.1`, author: currentFork.identity,
+        skill: currentFork.skill, audience: currentFork.audience, action: currentFork.action,
+        metric: currentFork.metric, evidence: currentFork.evidence,
+        fit: `实验质量评分 ${currentFork.auditScore}/100；具备完成 7 天实验的条件`,
+        fail: currentFork.review?.failed || '尚未完成复盘；保存后仍需继续验证',
+        parent: currentFork.parent, source: 'fork' });
+      saveSpecimens();
+      renderAll();
+      $('parent-select').value = currentFork.id;
+      renderSimulator();
+      $('fork-status').textContent = '已保存为新母本，并加入谱系链与母本库。';
+    };
+  };
+  renderAll();
+</script>
+</body>
+</html>
