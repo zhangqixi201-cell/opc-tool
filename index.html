@@ -170,6 +170,29 @@
       <section class="card">
         <div id="empty" class="output-empty"><div><div class="circle">⑂</div><b>等待 Fork</b><p>左侧填写你的变异条件<br>右侧将生成实验包与可追溯谱系</p></div></div>
         <div id="result" class="hidden"></div>
+        <div id="result-actions" class="hidden">
+          <div class="section">
+            <div class="section-title"><i></i>验证与导出</div>
+            <textarea id="evidence-input" placeholder="先记录一条验证证据，例如：访谈 3 人，其中 1 人愿意付费体验"></textarea>
+            <div class="action-row">
+              <button class="ghost" id="prove">+ 提交验证证据</button>
+              <button class="ghost" id="export">导出协议 JSON</button>
+              <button class="ghost" id="save-parent">保存为新母本</button>
+            </div>
+            <div id="fork-status" class="status"></div>
+          </div>
+          <div id="review-panel" class="section hidden">
+            <div class="section-title"><i></i>7 天后复盘</div>
+            <div class="review-form">
+              <textarea id="rv-did" placeholder="我做了什么？例如：发布 2 条内容、私信 10 人、完成 2 次诊断"></textarea>
+              <textarea id="rv-feedback" placeholder="得到了什么反馈？"></textarea>
+              <textarea id="rv-proved" placeholder="哪个假设被验证？"></textarea>
+              <textarea id="rv-failed" placeholder="哪个假设失败？"></textarea>
+              <textarea id="rv-next" placeholder="下一步怎么变异？"></textarea>
+              <button class="primary" id="finish-review">完成复盘并更新证据</button>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </main>
@@ -202,7 +225,7 @@
     <section class="card" style="margin-top:14px">
       <h2>裂变模拟器</h2>
       <p class="sub">基于当前选中的母本，快速查看三种变异方向；点击建议可带入 Fork Lab。</p>
-      <div id="simulator" class="suggestions"></div>
+      <div id="mutation-list" class="suggestions"></div>
     </section>
     <details class="card">
       <summary>新增母本标本</summary>
@@ -230,7 +253,7 @@
     <section class="card" style="margin-top:14px">
       <h2>浏览器母本库</h2>
       <p class="sub">默认母本、手动新增标本和 Fork 保存的新母本都会出现在这里。</p>
-      <div id="library" class="library"></div>
+      <div id="specimen-list" class="library"></div>
     </section>
   </main>
 
@@ -243,7 +266,7 @@
     <section class="card" style="margin-top:14px">
       <h2>最小协议对象</h2>
       <p class="sub">这是 OPC Fork 与普通提示词、课程模板最本质的区别。</p>
-      <pre>{
+      <pre id="protocol-json">{
   "fork_id": "opc-reading-demo-v0.1",
   "parent": "opc-edu-zhangqi-v1.0",
   "hypothesis": "诊断体验能建立足够的付费信任",
@@ -340,7 +363,7 @@
   }
 
   function renderLibrary() {
-    $('library').innerHTML = specimens.map(item => `
+    $('specimen-list').innerHTML = specimens.map(item => `
       <article class="library-card ${item.source === 'default' ? '' : 'user'}">
         <span class="tag">${item.source === 'default' ? '已验证母本' : '用户新增标本'}</span>
         <h4>${escapeHtml(item.name)}</h4>
@@ -379,8 +402,8 @@
       ['交付变异', `把服务压缩为一次诊断`, `将“${parent.action}”拆成低门槛体验，优先验证付费意愿。`],
       ['资产变异', `把经验变成自助诊断包`, `把重复讲解沉淀成问卷、清单或模板，测试非同步交付。`]
     ];
-    $('simulator').innerHTML = ideas.map((idea, index) => `
-      <button class="suggestion" data-index="${index}"><b>${idea[0]}</b>${escapeHtml(idea[1])}<span class="sub">${escapeHtml(idea[2])}</span></button>
+    $('mutation-list').innerHTML = ideas.map((idea, index) => `
+      <button class="suggestion mutation" data-index="${index}"><b>${idea[0]}</b>${escapeHtml(idea[1])}<span class="sub">${escapeHtml(idea[2])}</span></button>
     `).join('');
     document.querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
       const index = +button.dataset.index;
@@ -487,23 +510,15 @@
       <div class="audit-grid" style="margin-top:8px">${audit.dimensions.map(d => `<div class="audit-item ${d[1] ? 'pass' : 'warn'}"><b>${d[1] ? '✓' : '△'} ${d[0]}</b>${escapeHtml(d[2])}</div>`).join('')}</div>
       <div class="gene" style="margin-top:8px"><b style="color:var(--orange)">自动修复建议</b>${audit.repairs.map((r, i) => `${i + 1}. ${escapeHtml(r)}`).join('<br>')}
       <button class="ghost" id="apply-repair" style="margin-top:8px">应用修复并重新质检</button></div></div>
-      <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>
-      <div class="action-row"><button class="ghost" id="prove">+ 提交一次验证证据</button><button class="ghost" id="export">导出协议 JSON</button><button class="ghost" id="save-parent">保存为新母本</button></div>
-      <div id="fork-status" class="status"></div>
-      <div id="review-panel" class="section hidden"><div class="section-title"><i></i>7 天后复盘</div>
-        <div class="review-form">
-          <textarea id="rv-did" placeholder="我做了什么？例如：发布 2 条内容、私信 10 人、完成 2 次诊断"></textarea>
-          <textarea id="rv-feedback" placeholder="得到了什么反馈？"></textarea>
-          <textarea id="rv-proved" placeholder="哪个假设被验证？"></textarea>
-          <textarea id="rv-failed" placeholder="哪个假设失败？"></textarea>
-          <textarea id="rv-next" placeholder="下一步怎么变异？"></textarea>
-          <button class="primary" id="finish-review">完成复盘并更新证据</button>
-        </div>
-      </div>`;
+      <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>`;
     currentFork = { id: forkId, parent: parent.id, identity: identityRaw, skill: skillRaw, audience: audienceRaw,
       action: tasks[4][1] + '：' + tasks[4][2], metric: risk[2], evidence: '等待验证',
       experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null };
-    $('fork-simulator').innerHTML = $('simulator').innerHTML;
+    $('result-actions').classList.remove('hidden');
+    $('review-panel').classList.add('hidden');
+    $('fork-status').textContent = '';
+    $('evidence-input').value = '';
+    $('fork-simulator').innerHTML = $('mutation-list').innerHTML;
     $('fork-simulator').querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
       const index = +button.dataset.index;
       $('fork-status').textContent = index === 0
@@ -520,6 +535,7 @@
     };
     $('prove').onclick = () => {
       $('review-panel').classList.remove('hidden');
+      if ($('evidence-input').value.trim()) $('rv-feedback').value = $('evidence-input').value.trim();
       $('prove').textContent = '正在填写 7 天复盘';
     };
     $('finish-review').onclick = () => {
