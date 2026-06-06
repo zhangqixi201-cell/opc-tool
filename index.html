@@ -81,14 +81,14 @@
     .protocol-grid .card { min-height: 160px; }
     .num { font: 800 30px ui-monospace, monospace; color: var(--green); opacity: .75; }
     pre { white-space: pre-wrap; color: #cbd5e1; background: #090c12; border: 1px solid var(--line); padding: 15px; border-radius: 12px; font-size: 11px; overflow: auto; }
-    .spec-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+    .spec-top { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
     .stat b { display: block; font-size: 25px; color: var(--green); }
     .lineage { display: flex; gap: 8px; align-items: center; overflow-x: auto; padding: 8px 0 3px; }
     .node { min-width: 185px; border: 1px solid var(--line); border-radius: 11px; padding: 11px; background: #ffffff05; }
     .node b { display: block; margin-bottom: 2px; }
     .arrow { color: var(--green); }
     .callout { margin-top: 18px; padding: 13px; border-left: 3px solid var(--orange); background: #ffb86b0c; color: #cbd3df; }
-    .action-row { display: flex; gap: 8px; margin-top: 15px; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
     .ghost { border: 1px solid var(--line); background: #ffffff08; color: var(--text); padding: 8px 10px; border-radius: 9px; font-size: 11px; }
     details.card { margin-top: 14px; }
     details summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; justify-content: space-between; }
@@ -104,6 +104,42 @@
     .suggestion:hover { border-color: var(--green); }
     .suggestion b { display: block; color: var(--blue); margin-bottom: 3px; }
     .status { color: var(--green); font-size: 11px; margin-top: 9px; min-height: 17px; }
+    .status.error { color: var(--red); } .status.success { color: var(--green); }
+    .hint { border-left: 2px solid var(--blue); padding-left: 9px; color: var(--muted); font-size: 11px; margin: 8px 0 13px; }
+    .category-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 13px; }
+    .category { padding: 4px 8px; border-radius: 999px; background: #63b3ff12; border: 1px solid #63b3ff33; color: var(--blue); font-size: 10px; }
+    .mini-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 9px; }
+    .mini-score { padding: 6px; border-radius: 8px; background: #ffffff06; font-size: 9px; color: var(--muted); }
+    .mini-score b { display: block; color: var(--green); font-size: 12px; }
+    .node .tag { display: inline-block; margin-top: 6px; }
+    .live-feedback { margin-top: 13px; border: 1px solid var(--line); background: #ffffff04; border-radius: 12px; padding: 12px; }
+    .feedback-line { display: flex; gap: 8px; align-items: start; margin-top: 6px; font-size: 11px; color: var(--muted); }
+    .feedback-line b { color: var(--text); min-width: 64px; }
+    .category-filter { cursor: pointer; color: var(--blue); }
+    .category-filter.active { color: #07130d; background: var(--green); border-color: var(--green); }
+    .review-card { border: 1px solid #65f5ae44; background: #65f5ae08; border-radius: 13px; padding: 13px; margin-top: 12px; }
+    .review-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .review-card-grid div { background: #ffffff06; padding: 8px; border-radius: 8px; font-size: 11px; }
+    .timeline { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+    .day-card { min-width: 120px; border: 1px solid var(--line); background: #ffffff05; border-radius: 12px; padding: 10px; transition: .25s ease; }
+    .day-card.done { border-color: #65f5ae88; background: #65f5ae14; transform: translateY(-2px); }
+    .day-card b { display: block; color: var(--violet); margin-bottom: 5px; }
+    .progress-bar { height: 10px; background: #ffffff0d; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--blue)); transition: width .4s ease; }
+    .score-bump { animation: bump .35s ease; }
+    @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .modal { position: fixed; inset: 0; display: grid; place-items: center; background: #0009; z-index: 20; padding: 20px; }
+    .modal-card { max-width: 520px; width: 100%; border: 1px solid #65f5ae55; background: var(--panel); border-radius: 18px; padding: 22px; box-shadow: 0 20px 80px #000; }
+    .risk-panel { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: center; }
+    .gauge { width: 160px; height: 86px; border-radius: 160px 160px 0 0; background: conic-gradient(from 270deg, var(--green) 0 60deg, var(--orange) 60deg 120deg, var(--red) 120deg 180deg, transparent 180deg); position: relative; overflow: hidden; }
+    .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 32px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); }
+    .needle { position: absolute; width: 70px; height: 3px; background: var(--text); left: 80px; bottom: 2px; transform-origin: left center; transform: rotate(-25deg); transition: transform .4s ease; z-index: 2; }
+    .flow-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .map-canvas { min-height: 260px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff04; padding: 12px; position: relative; }
+    .map-node { border: 1px solid #ffffff22; border-radius: 12px; padding: 9px; margin: 8px; display: inline-block; cursor: pointer; font-size: 11px; }
+    .map-node.green { background: #65f5ae18; color: var(--green); } .map-node.yellow { background: #ffb86b18; color: var(--orange); } .map-node.blue { background: #63b3ff18; color: var(--blue); }
+    .redteam-card { border: 1px solid var(--line); border-radius: 12px; background: #ffffff05; padding: 12px; margin-top: 8px; }
+    .reverse-output { margin-top: 10px; }
     .audit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
     .audit-item { border: 1px solid var(--line); background: #ffffff05; border-radius: 10px; padding: 9px; font-size: 11px; }
     .audit-item b { color: var(--blue); display: block; margin-bottom: 2px; }
@@ -119,8 +155,8 @@
     .review-form textarea { min-height: 58px; }
     footer { color: #596579; border-top: 1px solid #ffffff0c; margin-top: 45px; padding: 22px 0; font-size: 11px; display: flex; justify-content: space-between; }
     @media (max-width: 800px) {
-      header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top { grid-template-columns: 1fr; }
-      .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
+      header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top { grid-template-columns: 1fr 1fr; }
+      .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary, .review-card-grid, .risk-panel, .flow-map { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
     }
   </style>
 </head>
@@ -150,6 +186,7 @@
       <section class="card">
         <h2>生成第一个可验证分叉</h2>
         <p class="sub">只生成 7 天内能跑完的最小经营实验。</p>
+        <div class="hint">输入你的身份、技能与首批客群，系统会生成最小 7 天实验，并自动检查它是否足够具体、可执行、可验证。</div>
         <label>选择母本</label>
         <select id="parent-select"></select>
         <label>你是谁</label>
@@ -164,25 +201,63 @@
         </div>
         <label>最大风险假设</label>
         <select id="risk"><option value="trust">客户不相信我值得付费</option><option value="need">客户可能根本没有这个需求</option><option value="delivery">我可能无法稳定交付结果</option></select>
+        <div id="live-feedback" class="live-feedback"></div>
         <button class="primary" id="generate">Fork 母本，生成 7 天实验 →</button>
       </section>
 
       <section class="card">
         <div id="empty" class="output-empty"><div><div class="circle">⑂</div><b>等待 Fork</b><p>左侧填写你的变异条件<br>右侧将生成实验包与可追溯谱系</p></div></div>
         <div id="result" class="hidden"></div>
+        <div id="result-actions" class="hidden">
+          <div class="section">
+            <div class="section-title"><i></i>验证与导出</div>
+            <textarea id="evidence-input" placeholder="先记录一条验证证据，例如：访谈 3 人，其中 1 人愿意付费体验"></textarea>
+            <div class="action-row">
+              <button class="ghost" id="prove">+ 提交验证证据</button>
+              <button class="ghost" id="export">导出协议 JSON</button>
+              <button class="ghost" id="save-parent">保存为新母本</button>
+            </div>
+            <div id="fork-status" class="status"></div>
+          </div>
+          <div id="review-panel" class="section hidden">
+            <div class="section-title"><i></i>7 天后复盘</div>
+            <div class="review-form">
+              <textarea id="rv-did" placeholder="我做了什么？例如：发布 2 条内容、私信 10 人、完成 2 次诊断"></textarea>
+              <textarea id="rv-feedback" placeholder="得到了什么反馈？"></textarea>
+              <textarea id="rv-proved" placeholder="哪个假设被验证？"></textarea>
+              <textarea id="rv-failed" placeholder="哪个假设失败？"></textarea>
+              <textarea id="rv-next" placeholder="下一步怎么变异？"></textarea>
+              <button class="primary" id="finish-review">完成复盘并更新证据</button>
+            </div>
+          </div>
+          <div id="review-result" class="hidden"></div>
+        </div>
       </section>
     </div>
+    <details class="card" style="margin-top:14px">
+      <summary>实验复盘模板</summary>
+      <p class="sub" style="margin-top:8px">完成 7 天实验后，用五个问题把一次行动变成下一代可复用母本。</p>
+      <div class="audit-grid">
+        <div class="audit-item"><b>01 我做了什么？</b>记录动作数量、渠道和真实投入。</div>
+        <div class="audit-item"><b>02 得到什么反馈？</b>只记录用户原话和实际行为。</div>
+        <div class="audit-item"><b>03 验证哪个假设？</b>说明哪些判断被证据支持。</div>
+        <div class="audit-item"><b>04 哪个假设失败？</b>失败结果同样进入标本库。</div>
+        <div class="audit-item"><b>05 下一步如何变异？</b>只改变人群、交付或资产中的一项。</div>
+      </div>
+    </details>
   </main>
 
   <main id="specimen" class="page">
     <div class="spec-top">
       <div class="card stat"><span class="sub">母本总数</span><b id="specimen-count">01</b>默认母本 + 用户新增</div>
+      <div class="card stat"><span class="sub">验证样本数</span><b id="verified-count">00</b>已有证据记录的母本</div>
+      <div class="card stat"><span class="sub">平均可信度</span><b id="average-trust">00%</b>基于完整度和证据</div>
       <div class="card stat"><span class="sub">用户新增标本</span><b id="user-count">00</b>保存在当前浏览器</div>
-      <div class="card stat"><span class="sub">可信度</span><b>72%</b>基于证据动态变化</div>
     </div>
+    <div class="category-row" id="category-summary"></div>
     <section class="card">
       <h2>opc-edu-zhangqi-v1.0</h2>
-      <p class="sub">母本不是成功学案例，而是一组带适用边界和证据等级的经营基因。</p>
+      <p class="sub">母本不是课程模板，而是带适用边界、失败信号和证据等级的经营实验基因。</p>
       <div class="dna">
         <div class="gene"><b>ACQUIRE / 获客</b>诊断问卷作为首个价值交换</div>
         <div class="gene"><b>DELIVER / 交付</b>45 分钟诊断式体验课</div>
@@ -202,20 +277,22 @@
     <section class="card" style="margin-top:14px">
       <h2>裂变模拟器</h2>
       <p class="sub">基于当前选中的母本，快速查看三种变异方向；点击建议可带入 Fork Lab。</p>
-      <div id="simulator" class="suggestions"></div>
+      <div id="mutation-list" class="suggestions"></div>
     </section>
     <details class="card">
       <summary>新增母本标本</summary>
       <p class="sub" style="margin-top:8px">把你的真实经验封装为下一位 Fork 者可复用的起点。数据仅保存在当前浏览器。</p>
+      <button class="ghost" id="fill-example">示例填充：独立设计顾问</button>
       <div class="row">
-        <div><label>标本名称</label><input id="sp-name" placeholder="例如：独立设计顾问 v1.0"></div>
-        <div><label>作者身份</label><input id="sp-author" placeholder="例如：有 5 年经验的产品设计师"></div>
+        <div><label>标本名称</label><input id="sp-name" maxlength="40" placeholder="例如：独立设计顾问 v1.0"></div>
+        <div><label>作者身份</label><input id="sp-author" maxlength="60" placeholder="例如：有 5 年经验的产品设计师"></div>
       </div>
+      <label>自定义标签</label><input id="sp-tags" maxlength="60" placeholder="例如：设计, SaaS, 咨询（使用逗号分隔）">
       <div class="row">
-        <div><label>核心技能</label><input id="sp-skill" placeholder="例如：为 SaaS 做转化页设计"></div>
-        <div><label>客群</label><input id="sp-audience" placeholder="例如：早期 SaaS 创始人"></div>
+        <div><label>核心技能</label><input id="sp-skill" maxlength="80" placeholder="例如：为 SaaS 做转化页设计"></div>
+        <div><label>客群</label><input id="sp-audience" maxlength="80" placeholder="例如：早期 SaaS 创始人"></div>
       </div>
-      <label>最小可执行动作</label><input id="sp-action" placeholder="例如：完成一次 30 分钟页面诊断">
+      <label>最小可执行动作</label><input id="sp-action" maxlength="120" placeholder="例如：完成一次 30 分钟页面诊断">
       <div class="row">
         <div><label>成功指标</label><input id="sp-metric" placeholder="例如：获得 1 个付费诊断"></div>
         <div><label>证据记录</label><input id="sp-evidence" placeholder="例如：已完成 8 次付费交付"></div>
@@ -229,8 +306,16 @@
     </details>
     <section class="card" style="margin-top:14px">
       <h2>浏览器母本库</h2>
-      <p class="sub">默认母本、手动新增标本和 Fork 保存的新母本都会出现在这里。</p>
-      <div id="library" class="library"></div>
+      <p class="sub">母本不是课程模板，而是带边界的经营实验基因。默认母本、手动新增标本和 Fork 保存的新母本都会出现在这里。</p>
+      <div class="action-row"><button class="ghost" id="random-specimen">随机生成一个示例母本</button><span id="library-status" class="status"></span></div>
+      <div id="specimen-list" class="library"></div>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <h2>母本逆向编译器</h2>
+      <p class="sub">粘贴一段爆款文章、销售信或推文，系统会先用本地规则拆成可 Fork 的“伪母本”。未来可在这里接入 LLM API。</p>
+      <textarea id="reverse-input" placeholder="粘贴你想模仿的内容：它服务谁？解决什么痛点？如何收费或交付？"></textarea>
+      <div class="action-row"><button class="primary" id="reverse-compile">逆向编译为 OPC 母本</button><button class="ghost" id="reverse-save">保存伪母本</button></div>
+      <div id="reverse-output" class="reverse-output"></div>
     </section>
   </main>
 
@@ -242,8 +327,8 @@
     </div>
     <section class="card" style="margin-top:14px">
       <h2>最小协议对象</h2>
-      <p class="sub">这是 OPC Fork 与普通提示词、课程模板最本质的区别。</p>
-      <pre>{
+      <p class="sub">JSON 协议记录每次实验，成功或失败都会回流母本库。这是 OPC Fork 与普通提示词、课程模板最本质的区别。</p>
+      <pre id="protocol-json">{
   "fork_id": "opc-reading-demo-v0.1",
   "parent": "opc-edu-zhangqi-v1.0",
   "hypothesis": "诊断体验能建立足够的付费信任",
@@ -297,6 +382,7 @@
   const defaultSpecimen = defaultSpecimens[0];
   let specimens = loadSpecimens();
   let currentFork = null;
+  let activeCategory = '全部';
 
   function loadSpecimens() {
     try {
@@ -319,6 +405,17 @@
   const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const makeId = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
   const selectedSpecimen = () => specimens.find(item => item.id === $('parent-select').value) || defaultSpecimen;
+  const specimenCategory = item => item.id.includes('edu') ? '教育服务'
+    : item.id.includes('skill') ? '技能陪跑'
+      : item.id.includes('creative') ? '内容创作'
+        : item.source === 'fork' ? 'Fork 后代' : '用户自定义';
+  const specimenScores = item => {
+    const clarity = Math.min(100, 45 + Math.min(item.audience?.length || 0, 30) * 2);
+    const execution = Math.min(100, 50 + Math.min(item.action?.length || 0, 40));
+    const metric = Math.min(100, 45 + Math.min(item.metric?.length || 0, 30) * 2);
+    const trust = Math.round((clarity + execution + metric + (item.evidence && item.evidence !== '等待验证' ? 100 : 35)) / 4);
+    return { clarity, execution, metric, trust };
+  };
 
   function switchPage(page) {
     document.querySelectorAll('.tab,.page').forEach(x => x.classList.remove('active'));
@@ -334,15 +431,31 @@
     $('parent-select').value = specimens.some(item => item.id === selectedId) ? selectedId : defaultSpecimen.id;
     $('specimen-count').textContent = String(specimens.length).padStart(2, '0');
     $('user-count').textContent = String(specimens.filter(item => item.source !== 'default').length).padStart(2, '0');
+    $('verified-count').textContent = String(specimens.filter(item => item.evidence && item.evidence !== '等待验证').length).padStart(2, '0');
+    $('average-trust').textContent = `${Math.round(specimens.reduce((sum, item) => sum + specimenScores(item).trust, 0) / specimens.length)}%`;
+    const categories = specimens.reduce((map, item) => {
+      const category = specimenCategory(item); map[category] = (map[category] || 0) + 1; return map;
+    }, {});
+    $('category-summary').innerHTML = [`<button class="category category-filter ${activeCategory === '全部' ? 'active' : ''}" data-category="全部">全部 ${specimens.length}</button>`,
+      ...Object.entries(categories).map(([name, count]) => `<button class="category category-filter ${activeCategory === name ? 'active' : ''}" data-category="${escapeHtml(name)}">${escapeHtml(name)} ${count}</button>`)].join('');
+    document.querySelectorAll('.category-filter').forEach(button => button.onclick = () => {
+      activeCategory = button.dataset.category;
+      renderAll();
+    });
     renderLibrary();
     renderLineage();
     renderSimulator();
   }
 
   function renderLibrary() {
-    $('library').innerHTML = specimens.map(item => `
+    const visibleSpecimens = activeCategory === '全部' ? specimens : specimens.filter(item => specimenCategory(item) === activeCategory);
+    $('specimen-list').innerHTML = visibleSpecimens.map(item => {
+      const scores = specimenScores(item);
+      return `
       <article class="library-card ${item.source === 'default' ? '' : 'user'}">
         <span class="tag">${item.source === 'default' ? '已验证母本' : '用户新增标本'}</span>
+        <span class="category">${specimenCategory(item)}</span>
+        ${(item.tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
         <h4>${escapeHtml(item.name)}</h4>
         <p class="sub">${escapeHtml(item.author)} · ${escapeHtml(item.audience)}</p>
         <div class="gene"><b>最小动作</b>${escapeHtml(item.action)}</div>
@@ -351,13 +464,37 @@
           <div class="fit"><b>适用条件</b>${escapeHtml(item.fit || '具备相关能力、可接触目标客群、能完成最小交付')}</div>
           <div class="fail"><b>失败信号</b>${escapeHtml(item.fail || '邀约无回复、用户不愿继续、交付后没有下一步行动')}</div>
         </div>
+        <div class="mini-scores">
+          <div class="mini-score"><b>${scores.clarity}</b>客群清晰度</div>
+          <div class="mini-score"><b>${scores.execution}</b>可执行性</div>
+          <div class="mini-score"><b>${scores.metric}</b>指标完整度</div>
+        </div>
         <div class="action-row"><button class="ghost use-specimen" data-id="${escapeHtml(item.id)}">在 Fork Lab 使用</button></div>
-      </article>`).join('');
+      </article>`;
+    }).join('');
     document.querySelectorAll('.use-specimen').forEach(button => button.onclick = () => {
       $('parent-select').value = button.dataset.id;
       applyParent();
       switchPage('lab');
     });
+  }
+
+  function renderLiveFeedback() {
+    const skill = $('skill').value.trim();
+    const audience = $('audience').value.trim();
+    const risk = $('risk').value;
+    const skillVague = skill.length < 10 || /^(写代码|设计|英语|赚钱|做内容)$/.test(skill);
+    const audienceVague = audience.length < 10 || /^(大学生|年轻人|所有人|职场人|创业者)$/.test(audience);
+    const riskTips = {
+      trust: '客户不信任：先提供低门槛诊断，用案例和可感知结果建立信任。',
+      need: '需求不确定：先访谈 3 人，确认问题频率与现有替代方案。',
+      delivery: '交付风险：先压缩成果范围，确保 7 天内能够稳定完成。'
+    };
+    $('live-feedback').innerHTML = `
+      <b>实验预检</b>
+      <div class="feedback-line"><b>${skillVague ? '△ 智能提示' : '✓ 能力描述'}</b><span>${skillVague ? '能力太泛，建议写成一个可交付结果，例如“7 天完成可展示的 Python 项目”。' : '能力描述包含具体交付方向。'}</span></div>
+      <div class="feedback-line"><b>${audienceVague ? '△ 客群提示' : '✓ 客群描述'}</b><span>${audienceVague ? '客群太宽，建议加入阶段、痛点或明确时间节点。' : '客群具有一定具体度。'}</span></div>
+      <div class="feedback-line"><b>风险提醒</b><span>${riskTips[risk]}</span></div>`;
   }
 
   function renderLineage() {
@@ -367,7 +504,7 @@
       '<span class="arrow">→</span><div class="node"><b>作品集辅导 v1.2</b><span class="sub">变异 · 客单价 +35%</span></div>'
     ];
     const userNodes = specimens.filter(item => item.source !== 'default').map(item =>
-      `<span class="arrow">→</span><div class="node"><b>${escapeHtml(item.name)}</b><span class="sub">用户新增标本 · ${escapeHtml(item.parent || '独立母本')}</span></div>`
+      `<span class="arrow">→</span><div class="node"><b>${escapeHtml(item.name)}</b><span class="sub">${escapeHtml(item.parent || '独立母本')}</span><span class="tag">${item.source === 'fork' ? 'Fork 后代' : '用户母本'}</span></div>`
     );
     $('lineage').innerHTML = [...fixed, ...userNodes].join('');
   }
@@ -379,8 +516,8 @@
       ['交付变异', `把服务压缩为一次诊断`, `将“${parent.action}”拆成低门槛体验，优先验证付费意愿。`],
       ['资产变异', `把经验变成自助诊断包`, `把重复讲解沉淀成问卷、清单或模板，测试非同步交付。`]
     ];
-    $('simulator').innerHTML = ideas.map((idea, index) => `
-      <button class="suggestion" data-index="${index}"><b>${idea[0]}</b>${escapeHtml(idea[1])}<span class="sub">${escapeHtml(idea[2])}</span></button>
+    $('mutation-list').innerHTML = ideas.map((idea, index) => `
+      <button class="suggestion mutation" data-index="${index}"><b>${idea[0]}</b>${escapeHtml(idea[1])}<span class="sub">${escapeHtml(idea[2])}</span></button>
     `).join('');
     document.querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
       const index = +button.dataset.index;
@@ -397,19 +534,46 @@
     $('skill').value = parent.skill;
     $('audience').value = parent.audience;
     renderSimulator();
+    renderLiveFeedback();
   }
 
   $('parent-select').onchange = applyParent;
+  ['skill', 'audience', 'risk'].forEach(id => $(id).addEventListener('input', renderLiveFeedback));
+  $('risk').addEventListener('change', renderLiveFeedback);
+
+  $('fill-example').onclick = () => {
+    const example = {
+      'sp-name': '独立设计顾问 v1.0', 'sp-author': '有 5 年经验的产品设计师',
+      'sp-tags': '设计, SaaS, 咨询',
+      'sp-skill': '为早期 SaaS 提供转化页诊断与改版建议', 'sp-audience': '上线 3 个月内、注册转化偏低的 SaaS 创始人',
+      'sp-action': '完成一次 30 分钟转化页诊断并交付 5 条改版清单', 'sp-metric': '获得 1 个付费诊断',
+      'sp-evidence': '已完成 6 次页面诊断，其中 2 次转为付费改版',
+      'sp-fit': '有公开设计案例；7 天能触达至少 3 位 SaaS 创始人',
+      'sp-fail': '诊断后用户不愿执行任何建议；连续 10 次邀约仍 0 回复'
+    };
+    Object.entries(example).forEach(([id, value]) => $(id).value = value);
+    $('add-status').className = 'status';
+    $('add-status').textContent = '示例已填充，可以修改后提交。';
+  };
 
   $('add-specimen').onclick = () => {
     const fields = {
       name: $('sp-name').value.trim(), author: $('sp-author').value.trim(),
+      tags: $('sp-tags').value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean).slice(0, 5),
       skill: $('sp-skill').value.trim(), audience: $('sp-audience').value.trim(),
       action: $('sp-action').value.trim(), metric: $('sp-metric').value.trim(),
       evidence: $('sp-evidence').value.trim(), fit: $('sp-fit').value.trim(), fail: $('sp-fail').value.trim()
     };
-    if (!fields.name || !fields.skill || !fields.audience || !fields.action || !fields.metric) {
-      $('add-status').textContent = '请至少填写标本名称、核心技能、客群、最小动作和成功指标。';
+    const missing = [['标本名称', fields.name], ['核心技能', fields.skill], ['客群', fields.audience], ['最小动作', fields.action], ['成功指标', fields.metric]]
+      .filter(item => !item[1]).map(item => item[0]);
+    if (missing.length) {
+      $('add-status').className = 'status error';
+      $('add-status').textContent = `还需要填写：${missing.join('、')}。`;
+      return;
+    }
+    if (fields.audience.length < 8 || fields.action.length < 10) {
+      $('add-status').className = 'status error';
+      $('add-status').textContent = '客群或最小动作仍过于简短，请写得更具体。';
       return;
     }
     const item = { id: makeId('opc-user'), ...fields, author: fields.author || '匿名 OPC 创作者',
@@ -420,8 +584,65 @@
     renderAll();
     $('parent-select').value = item.id;
     renderSimulator();
-    $('add-status').textContent = `已加入母本库：${item.name}`;
-    ['sp-name','sp-author','sp-skill','sp-audience','sp-action','sp-metric','sp-evidence','sp-fit','sp-fail'].forEach(id => $(id).value = '');
+    $('add-status').className = 'status success';
+    $('add-status').textContent = `✓ 已加入母本库：${item.name}。现在可在 Fork Lab 的母本下拉列表中选择。`;
+    ['sp-name','sp-author','sp-tags','sp-skill','sp-audience','sp-action','sp-metric','sp-evidence','sp-fit','sp-fail'].forEach(id => $(id).value = '');
+  };
+
+  $('random-specimen').onclick = () => {
+    const examples = [
+      { name:'考研数学陪跑 v1.0', author:'有三年辅导经验的研究生', skill:'帮助基础薄弱考生完成一周高频题型训练', audience:'距离考研不足 90 天且数学低于 80 分的考生', action:'完成一次错题诊断并制定 7 天训练表', metric:'7 天完成 30 道高频题并复测', evidence:'等待验证', fit:'用户每天可练习至少 60 分钟', fail:'连续三天不提交练习记录', tags:['教育','考研'] },
+      { name:'Python 项目陪跑 v1.0', author:'有真实项目经验的开发者', skill:'带非科班学生完成一个可展示的数据分析项目', audience:'准备转码但简历没有项目的大二或大三学生', action:'完成一次项目选题诊断并创建首个可运行版本', metric:'7 天产出 1 个 GitHub 项目', evidence:'等待验证', fit:'用户每周可投入 8 小时', fail:'只看教程但不提交代码', tags:['技能','Python'] },
+      { name:'小红书账号诊断 v1.0', author:'有公开增长案例的内容创作者', skill:'为初级创作者诊断账号定位与选题结构', audience:'发布超过 20 篇但平均互动低于 20 的小红书创作者', action:'完成一次账号诊断并交付 10 条选题清单', metric:'获得 1 次付费诊断', evidence:'等待验证', fit:'有公开作品与诊断案例', fail:'用户只收藏建议但不执行', tags:['创作','小红书'] }
+    ];
+    const sample = examples[Math.floor(Math.random() * examples.length)];
+    const item = { id: makeId('opc-random'), ...sample, parent:'', source:'user' };
+    specimens.push(item); saveSpecimens(); activeCategory = '全部'; renderAll();
+    $('library-status').textContent = `✓ 已生成示例母本：${item.name}`;
+  };
+
+  let reverseDraft = null;
+  $('reverse-compile').onclick = () => {
+    const text = $('reverse-input').value.trim();
+    if (text.length < 20) {
+      $('reverse-output').innerHTML = '<div class="status error">请至少粘贴 20 个字以上的文章、销售信或推文。</div>';
+      return;
+    }
+    const audience = /学生|大学生|家长|创始人|老板|打工人|创作者|老师|程序员/.exec(text)?.[0] || '有明确痛点的早期用户';
+    const value = /提升|解决|拿到|完成|变现|增长|转化|提分|省时/.exec(text)?.[0] || '获得可感知结果';
+    const priceHint = /￥|¥|元|付费|报价|咨询|课程|会员/.test(text) ? '付费诊断 / 课程 / 咨询' : '先免费诊断，再转付费体验';
+    reverseDraft = {
+      id: makeId('opc-reverse'), name: `逆向母本：${audience} ${value}`, author: '逆向编译器',
+      skill: `帮助${audience}${value}`, audience, action: `完成一次围绕“${value}”的最小诊断`,
+      metric: '获得 1 次明确反馈或付费意向', evidence: '由外部文本逆向生成，等待验证',
+      fit: '原文已有清晰痛点、承诺或行动号召', fail: '无法提取客群或变现路径，需要人工补充',
+      tags: ['逆向编译', '伪母本'], parent: '', source: 'user'
+    };
+    $('reverse-output').innerHTML = `
+      <div class="gene"><b>伪母本草案</b>
+      目标客群：${escapeHtml(reverseDraft.audience)}<br>
+      价值主张：${escapeHtml(reverseDraft.skill)}<br>
+      变现路径：${escapeHtml(priceHint)}<br>
+      最小动作：${escapeHtml(reverseDraft.action)}</div>
+      <pre>target_audience: ${escapeHtml(reverseDraft.audience)}
+value_proposition: ${escapeHtml(reverseDraft.skill)}
+monetization_logic: ${escapeHtml(priceHint)}
+minimum_action: ${escapeHtml(reverseDraft.action)}
+success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
+  };
+
+  $('reverse-save').onclick = () => {
+    if (!reverseDraft) {
+      $('reverse-output').innerHTML = '<div class="status error">请先完成一次逆向编译。</div>';
+      return;
+    }
+    specimens.push(reverseDraft);
+    saveSpecimens();
+    activeCategory = '全部';
+    renderAll();
+    $('parent-select').value = reverseDraft.id;
+    $('reverse-output').innerHTML += `<div class="status success">✓ 已保存伪母本：${escapeHtml(reverseDraft.name)}</div>`;
+    reverseDraft = null;
   };
 
   function auditExperiment(parent, skill, audience, hours, risk, target) {
@@ -446,7 +667,115 @@
     return { dimensions, score: Math.min(score, 100), repairs };
   }
 
-  $('generate').onclick = () => {
+  function renderExperimentSandbox() {
+    if (!currentFork) return;
+    $('experiment-sandbox').innerHTML = currentFork.sandbox.map((task, index) => `
+      <div class="day-card ${task.done ? 'done' : ''}" data-index="${index}">
+        <b>Day ${task.day}</b>
+        <label><input type="checkbox" class="sandbox-check" data-index="${index}" ${task.done ? 'checked' : ''}> ${escapeHtml(task.title)}</label>
+        <p class="sub">${escapeHtml(task.desc)}</p>
+        <button class="ghost sandbox-evidence" data-index="${index}">提交今日证据</button>
+        ${task.evidence ? `<p class="sub">证据：${escapeHtml(task.evidence)}</p>` : ''}
+      </div>`).join('');
+    document.querySelectorAll('.sandbox-check').forEach(box => box.onchange = () => {
+      const task = currentFork.sandbox[+box.dataset.index];
+      task.done = box.checked;
+      if (box.checked) currentFork.trust = Math.min(100, currentFork.trust + 10);
+      else currentFork.trust = Math.max(10, currentFork.trust - 10);
+      updateSandboxState();
+    });
+    document.querySelectorAll('.sandbox-evidence').forEach(button => button.onclick = () => {
+      const task = currentFork.sandbox[+button.dataset.index];
+      const evidence = prompt(`提交 Day ${task.day} 证据：`, task.evidence || '');
+      if (evidence === null) return;
+      task.evidence = evidence.trim();
+      if (/没人|0|拒绝|失败|无回复|不愿意|负面/.test(task.evidence)) currentFork.negativeEvidence += 1;
+      updateSandboxState();
+    });
+    syncSandboxProgress(false);
+  }
+
+  function updateSandboxState(animate = true) {
+    renderExperimentSandbox();
+    syncSandboxProgress(animate);
+    updateRiskDashboard();
+    if (currentFork.sandbox.every(t => t.done)) showCompletionModal();
+  }
+
+  function syncSandboxProgress(animate = true) {
+    const doneCount = currentFork.sandbox.filter(t => t.done).length;
+    const progress = Math.round(doneCount / currentFork.sandbox.length * 100);
+    $('sandbox-progress').style.width = `${progress}%`;
+    $('sandbox-day').textContent = `Day ${doneCount}/7`;
+    const scoreEl = document.querySelector('.score strong');
+    scoreEl.textContent = `${currentFork.trust}%`;
+    if (animate) { scoreEl.classList.remove('score-bump'); void scoreEl.offsetWidth; scoreEl.classList.add('score-bump'); }
+  }
+
+  function showCompletionModal() {
+    if (document.getElementById('complete-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'complete-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-card"><h2>实验完成</h2><p class="sub">你的 7 天实验已跑完，最终可信度 ${currentFork.trust}%。现在可以复盘并保存为新母本。</p><div class="action-row"><button class="primary" id="modal-review">进入复盘</button><button class="ghost" id="modal-close">稍后处理</button></div></div>`;
+    document.body.appendChild(modal);
+    $('modal-review').onclick = () => { modal.remove(); $('review-panel').classList.remove('hidden'); };
+    $('modal-close').onclick = () => modal.remove();
+  }
+
+  function updateRiskDashboard() {
+    if (!currentFork || !$('risk-needle')) return;
+    const riskScore = Math.max(10, Math.min(95, 100 - currentFork.trust + currentFork.negativeEvidence * 18));
+    $('risk-needle').style.transform = `rotate(${riskScore * 1.8 - 90}deg)`;
+    $('trust-progress').style.width = `${currentFork.trust}%`;
+    $('trust-water').textContent = `${currentFork.trust}%，已提交 ${currentFork.sandbox.filter(t => t.evidence).length} 条证据`;
+    $('risk-label').textContent = riskScore > 70 ? '风险状态：红色熔断预警' : riskScore > 42 ? '风险状态：黄色观察' : '风险状态：绿色可推进';
+    $('meltdown-warning').textContent = currentFork.negativeEvidence >= 2 ? '项目熔断风险：负面证据偏多，建议暂停并缩小客群。' : '风险可控：继续收集真实证据。';
+  }
+
+  function renderDecisionMap(parent, skill, audience, risk) {
+    const nodes = [
+      ['green', '获客渠道', `${audience}：小红书/私域/熟人转介绍`],
+      ['yellow', '定价策略', `先用低门槛诊断验证 ${risk[2]}`],
+      ['yellow', '客户筛选', parent.fit || '选择痛点明确且愿意行动的人'],
+      ['blue', '交付物', skill],
+      ['blue', '证据资产', '诊断记录、反馈原话、复盘卡']
+    ];
+    $('decision-map').innerHTML = nodes.map((n, i) => `<button class="map-node ${n[0]}" data-title="${escapeHtml(n[1])}" data-detail="${escapeHtml(n[2])}">${escapeHtml(n[1])}</button>`).join('<br>');
+    document.querySelectorAll('.map-node').forEach(node => node.onclick = () => {
+      $('map-title').textContent = node.dataset.title;
+      $('map-detail').textContent = node.dataset.detail;
+    });
+  }
+
+  $('generate').onclick = () => showRedTeam();
+
+  function showRedTeam() {
+    const skill = $('skill').value.trim() || '你的核心能力';
+    const audience = $('audience').value.trim() || '第一批客户';
+    const risk = $('risk').selectedOptions[0].text;
+    $('empty').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('result-actions').classList.add('hidden');
+    $('result').innerHTML = `
+      <div class="fork-head"><div><div class="fork-id">Adversarial Check</div><h2>红队攻击模拟器</h2><p class="sub">生成 7 天计划前，先承受一次现实质疑。</p></div></div>
+      <div class="redteam-card"><b>挑剔的客户</b><p>“为什么我要为『${escapeHtml(skill)}』付费？请给我三个不能自己搜索解决的理由。”</p><textarea id="red-customer" placeholder="回应客户质疑，并补强你的价值主张"></textarea></div>
+      <div class="redteam-card"><b>理性的风控</b><p>“你的最大风险是『${escapeHtml(risk)}』。你准备投入的时间、人情成本和失败成本算清了吗？”</p><textarea id="red-risk" placeholder="写下你要缩小的范围、成本或验证口径"></textarea></div>
+      <div class="redteam-card"><b>嫉妒的同行</b><p>“${escapeHtml(audience)} 这个人群已经有人服务了，你凭什么还有机会？”</p><textarea id="red-rival" placeholder="写下你的差异化：人群、交付、资产三选一"></textarea></div>
+      <div class="action-row"><button class="ghost" id="red-apply">把红队建议写回输入</button><button class="primary" id="red-continue">通过红队，生成 7 天沙盘</button></div>
+      <div id="red-status" class="status"></div>`;
+    $('red-apply').onclick = () => {
+      const rival = $('red-rival').value.trim();
+      const customer = $('red-customer').value.trim();
+      if (customer) $('skill').value = `${skill}（价值主张：${customer.slice(0, 34)}）`;
+      if (rival) $('audience').value = `${audience}中的高意愿细分用户`;
+      renderLiveFeedback();
+      $('red-status').textContent = '已把红队修正写回左侧变量。';
+    };
+    $('red-continue').onclick = () => buildForkFromInputs();
+  }
+
+  function buildForkFromInputs() {
     const parent = selectedSpecimen();
     const identityRaw = $('identity').value || '未命名创作者';
     const skillRaw = $('skill').value || '你的核心能力';
@@ -476,34 +805,53 @@
       <div class="fork-head"><div><div class="fork-id">${forkId} ← ${escapeHtml(parent.id)}</div>
       <h2>${skill}</h2><p class="sub">${identity} · ${audience} · 7 天 / ${hours} 小时</p></div>
       <div class="score"><strong>46%</strong><span class="sub">初始可信度</span></div></div>
+      <div class="section"><div class="section-title"><i></i>动态风险仪表盘</div>
+      <div class="risk-panel">
+        <div><div class="gauge"><span id="risk-needle" class="needle"></span></div><p class="sub" id="risk-label">风险状态：黄色观察</p></div>
+        <div>
+          <div class="feedback-line"><b>资金流红线</b><span id="cash-days">可支撑 ${Math.max(7, Math.round(hours * 1.8))} 天实验节奏</span></div>
+          <div class="feedback-line"><b>信任度水位</b><span id="trust-water">46%，等待证据累积</span></div>
+          <div class="feedback-line"><b>熔断预警</b><span id="meltdown-warning">若连续负面证据超过 2 条，建议暂停并缩小人群。</span></div>
+          <div class="progress-bar"><div id="trust-progress" class="progress-fill" style="width:46%"></div></div>
+        </div>
+      </div></div>
       <div class="section"><div class="section-title"><i></i>这次 Fork 要验证什么</div>
       <div class="gene"><b style="color:var(--orange)">最大风险假设</b>${risk[0]}。策略：${risk[1]}。唯一北极星指标：<span style="color:var(--green)">${risk[2]}</span>。</div></div>
       <div class="section"><div class="section-title"><i></i>变异记录 Mutation Diff</div>
       <div class="diff"><span>${escapeHtml(parent.skill)}<br>${escapeHtml(parent.audience)}<br><small class="sub">母本条件</small></span><span class="arrow">→</span><span class="to">${skill}<br>${audience}</span></div></div>
       <div class="section"><div class="section-title"><i></i>7 天最小经营实验</div>
       <div class="tasks">${tasks.map(t => `<div class="task"><span class="day">D${t[0]}</span><span><b>${t[1]}</b><small>${t[2]}</small></span><span class="metric">${t[3]}</span></div>`).join('')}</div></div>
+      <div class="section"><div class="section-title"><i></i>7 天实验实时沙盘 <span id="sandbox-day" class="tag">Day 0/7</span></div>
+      <div class="progress-bar"><div id="sandbox-progress" class="progress-fill"></div></div>
+      <div id="experiment-sandbox" class="timeline"></div></div>
+      <div class="section"><div class="section-title"><i></i>决策图谱</div>
+      <div class="flow-map"><div id="decision-map" class="map-canvas"></div><div class="gene"><b id="map-title">点击节点查看详情</b><div id="map-detail" class="sub">绿色=获客渠道，黄色=决策逻辑，蓝色=交付物。</div></div></div></div>
       <div class="section"><div class="section-title"><i></i>系统质检与实验质量评分</div>
       <div class="quality-score"><strong>${audit.score} / 100</strong><span><b>OPC 实验分</b><br><small class="sub">生成后自动审查，不让宽泛方案直接进入执行。</small></span></div>
       <div class="audit-grid" style="margin-top:8px">${audit.dimensions.map(d => `<div class="audit-item ${d[1] ? 'pass' : 'warn'}"><b>${d[1] ? '✓' : '△'} ${d[0]}</b>${escapeHtml(d[2])}</div>`).join('')}</div>
       <div class="gene" style="margin-top:8px"><b style="color:var(--orange)">自动修复建议</b>${audit.repairs.map((r, i) => `${i + 1}. ${escapeHtml(r)}`).join('<br>')}
       <button class="ghost" id="apply-repair" style="margin-top:8px">应用修复并重新质检</button></div></div>
-      <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>
-      <div class="action-row"><button class="ghost" id="prove">+ 提交一次验证证据</button><button class="ghost" id="export">导出协议 JSON</button><button class="ghost" id="save-parent">保存为新母本</button></div>
-      <div id="fork-status" class="status"></div>
-      <div id="review-panel" class="section hidden"><div class="section-title"><i></i>7 天后复盘</div>
-        <div class="review-form">
-          <textarea id="rv-did" placeholder="我做了什么？例如：发布 2 条内容、私信 10 人、完成 2 次诊断"></textarea>
-          <textarea id="rv-feedback" placeholder="得到了什么反馈？"></textarea>
-          <textarea id="rv-proved" placeholder="哪个假设被验证？"></textarea>
-          <textarea id="rv-failed" placeholder="哪个假设失败？"></textarea>
-          <textarea id="rv-next" placeholder="下一步怎么变异？"></textarea>
-          <button class="primary" id="finish-review">完成复盘并更新证据</button>
-        </div>
-      </div>`;
+      <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>`;
     currentFork = { id: forkId, parent: parent.id, identity: identityRaw, skill: skillRaw, audience: audienceRaw,
       action: tasks[4][1] + '：' + tasks[4][2], metric: risk[2], evidence: '等待验证',
-      experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null };
-    $('fork-simulator').innerHTML = $('simulator').innerHTML;
+      experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null,
+      sandbox: tasks.map(t => ({day: t[0], title: t[1], desc: t[2], metric: t[3], done: false, evidence: ''})), trust: 46, negativeEvidence: 0 };
+    $('protocol-json').textContent = JSON.stringify({
+      fork_id: forkId, parent: parent.id, hypothesis: risk[0],
+      mutation: { audience: audienceRaw, offer: skillRaw },
+      experiment: { window_days: 7, budget_hours: hours },
+      success_metric: { name: risk[2], threshold: target }, evidence: [], license: 'OPC-1.0'
+    }, null, 2);
+    $('result-actions').classList.remove('hidden');
+    $('review-panel').classList.add('hidden');
+    $('review-result').classList.add('hidden');
+    $('review-result').innerHTML = '';
+    $('fork-status').textContent = '';
+    $('evidence-input').value = '';
+    renderExperimentSandbox();
+    renderDecisionMap(parent, skillRaw, audienceRaw, risk);
+    updateRiskDashboard();
+    $('fork-simulator').innerHTML = $('mutation-list').innerHTML;
     $('fork-simulator').querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
       const index = +button.dataset.index;
       $('fork-status').textContent = index === 0
@@ -520,6 +868,7 @@
     };
     $('prove').onclick = () => {
       $('review-panel').classList.remove('hidden');
+      if ($('evidence-input').value.trim()) $('rv-feedback').value = $('evidence-input').value.trim();
       $('prove').textContent = '正在填写 7 天复盘';
     };
     $('finish-review').onclick = () => {
@@ -535,6 +884,25 @@
       $('prove').textContent = '✓ 已完成复盘，可信度 +12%';
       $('review-panel').classList.add('hidden');
       $('fork-status').textContent = '复盘已记录：Fork → Run → Prove → Review → Save as Specimen → Fork Again';
+      $('review-result').classList.remove('hidden');
+      $('review-result').innerHTML = `
+        <div class="review-card">
+          <div class="section-title"><i></i>实验复盘卡 · ${escapeHtml(currentFork.id)}</div>
+          <div class="review-card-grid">
+            <div><b>我做了什么</b><br>${escapeHtml(review.did)}</div>
+            <div><b>得到的反馈</b><br>${escapeHtml(review.feedback)}</div>
+            <div><b>验证的假设</b><br>${escapeHtml(review.proved || '尚未确认')}</div>
+            <div><b>失败的假设</b><br>${escapeHtml(review.failed || '尚未确认')}</div>
+            <div><b>下一步变异</b><br>${escapeHtml(review.next)}</div>
+            <div><b>当前可信度</b><br>58% · 实验质量 ${currentFork.auditScore}/100</div>
+          </div>
+          <button class="primary" id="review-save-parent">一键保存为下一代母本</button>
+        </div>`;
+      $('review-save-parent').onclick = () => saveCurrentForkAsSpecimen();
+      $('protocol-json').textContent = JSON.stringify({
+        fork_id: currentFork.id, parent: currentFork.parent, hypothesis: currentFork.hypothesis,
+        experiment: currentFork.experiment, evidence: [review.feedback], review, license: 'OPC-1.0'
+      }, null, 2);
     };
     $('export').onclick = () => {
       const data = {fork_id:forkId,parent:parent.id,identity:identityRaw,skill:skillRaw,audience:audienceRaw,
@@ -542,19 +910,25 @@
         audit:{score:audit.score,repairs:audit.repairs},review:currentFork.review,license:'OPC-1.0'};
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
       a.download = `${forkId}.json`; a.click(); URL.revokeObjectURL(a.href);
+      $('fork-status').className = 'status success';
+      $('fork-status').textContent = `✓ 已导出文件：${forkId}.json`;
     };
-    $('save-parent').onclick = () => {
+    $('save-parent').onclick = () => saveCurrentForkAsSpecimen();
+    function saveCurrentForkAsSpecimen() {
       if (!currentFork.review) {
+        $('fork-status').className = 'status error';
         $('fork-status').textContent = '请先提交验证证据并完成 7 天复盘，再保存为新母本。';
         return;
       }
       if (specimens.some(item => item.id === currentFork.id)) {
+        $('fork-status').className = 'status';
         $('fork-status').textContent = '这个 Fork 已经保存为母本。';
         return;
       }
       specimens.push({ id: currentFork.id, name: `${currentFork.skill} v0.1`, author: currentFork.identity,
         skill: currentFork.skill, audience: currentFork.audience, action: currentFork.action,
         metric: currentFork.metric, evidence: currentFork.evidence,
+        tags: ['Fork 后代', specimenCategory(parent)],
         fit: `实验质量评分 ${currentFork.auditScore}/100；具备完成 7 天实验的条件`,
         fail: currentFork.review?.failed || '尚未完成复盘；保存后仍需继续验证',
         parent: currentFork.parent, source: 'fork' });
@@ -562,10 +936,14 @@
       renderAll();
       $('parent-select').value = currentFork.id;
       renderSimulator();
-      $('fork-status').textContent = '已保存为新母本，并加入谱系链与母本库。';
-    };
+      $('fork-status').className = 'status success';
+      $('fork-status').textContent = `✓ 下一代母本“${currentFork.skill} v0.1”已保存，可继续 Fork。`;
+      const reviewButton = $('review-save-parent');
+      if (reviewButton) { reviewButton.disabled = true; reviewButton.textContent = '✓ 已保存为下一代母本'; }
+    }
   };
   renderAll();
+  renderLiveFeedback();
 </script>
 </body>
 </html>
