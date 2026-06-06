@@ -145,10 +145,21 @@
     .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 34px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); z-index: 1; }
     .needle { position: absolute; width: 4px; height: 68px; background: var(--text); left: 78px; bottom: 0; transform-origin: 50% 100%; transform: rotate(0deg); transition: transform .45s cubic-bezier(.2,.8,.2,1); z-index: 3; border-radius: 999px; box-shadow: 0 0 10px #0008; }
     .needle::after { content: ""; position: absolute; width: 13px; height: 13px; left: -4.5px; bottom: -6.5px; border-radius: 50%; background: var(--text); }
-    .flow-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .map-canvas { min-height: 260px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff04; padding: 12px; position: relative; }
-    .map-node { border: 1px solid #ffffff22; border-radius: 12px; padding: 9px; margin: 8px; display: inline-block; cursor: pointer; font-size: 11px; }
-    .map-node.green { background: #65f5ae18; color: var(--green); } .map-node.yellow { background: #ffb86b18; color: var(--orange); } .map-node.blue { background: #63b3ff18; color: var(--blue); }
+    .flow-map { display: grid; grid-template-columns: 1.08fr .92fr; gap: 12px; }
+    .map-canvas { min-height: 300px; border: 1px solid var(--line); border-radius: 14px; background: radial-gradient(circle at 28% 22%, #65f5ae12, transparent 34%), radial-gradient(circle at 82% 68%, #63b3ff10, transparent 32%), #ffffff04; padding: 16px; position: relative; overflow: hidden; }
+    .map-cloud { display: flex; flex-wrap: wrap; align-content: center; gap: 10px; min-height: 220px; }
+    .map-node { border: 1px solid #ffffff22; border-radius: 999px; padding: 8px 12px; cursor: pointer; font-size: 11px; color: var(--text); transition: .18s ease; }
+    .map-node:hover, .map-node.active { transform: translateY(-2px); border-color: currentColor; box-shadow: 0 0 18px #ffffff14; }
+    .map-node.size-1 { font-size: 10px; opacity: .84; }
+    .map-node.size-2 { font-size: 12px; }
+    .map-node.size-3 { font-size: 15px; font-weight: 800; }
+    .map-node.green { background: #65f5ae18; color: var(--green); } .map-node.yellow { background: #ffb86b18; color: var(--orange); } .map-node.blue { background: #63b3ff18; color: var(--blue); } .map-node.violet { background: #a78bfa18; color: var(--violet); }
+    .map-legend { display: flex; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: 10px; margin-top: 12px; }
+    .map-legend span { border: 1px solid var(--line); border-radius: 999px; padding: 4px 7px; background: #ffffff06; }
+    .map-insight { display: grid; gap: 10px; }
+    .map-insight .tag { width: fit-content; }
+    .map-path { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+    .map-path span { border-radius: 999px; padding: 5px 8px; background: #ffffff08; color: var(--muted); font-size: 10px; }
     .redteam-card { border: 1px solid var(--line); border-radius: 12px; background: #ffffff05; padding: 12px; margin-top: 8px; }
     .reverse-output { margin-top: 10px; }
     .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
@@ -958,6 +969,47 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     });
   }
 
+  function renderDecisionMap(parent, skill, audience, risk) {
+    const nodes = [
+      { color: 'green', size: 3, title: '首批客群', detail: audience, why: '决定先接触谁，避免把实验做成泛泛的方案。' },
+      { color: 'green', size: 2, title: '小红书/朋友圈', detail: `${audience} 的低成本触达入口`, why: '优先使用不需要额外预算的获客渠道。' },
+      { color: 'green', size: 1, title: '熟人转介绍', detail: '从可信关系里拿到第一批反馈', why: '当信任是最大风险时，熟人链路能降低冷启动阻力。' },
+      { color: 'yellow', size: 3, title: '最大风险假设', detail: risk[0], why: `本轮不是证明能力强，而是验证：${risk[2]}。` },
+      { color: 'yellow', size: 2, title: '先卖诊断', detail: '不先卖完整课程，先卖一次可交付的小结果', why: '用更小承诺测试付费意愿，减少试错成本。' },
+      { color: 'yellow', size: 1, title: '筛选条件', detail: parent.fit || '选择痛点明确且愿意行动的人', why: '把有限的 7 天用在最可能给出真实反馈的人身上。' },
+      { color: 'blue', size: 3, title: '交付物', detail: skill, why: '用户最终买到的不是概念，而是可感知的结果。' },
+      { color: 'blue', size: 2, title: '证据资产', detail: '诊断记录、反馈原话、报价反应、复盘卡', why: '每一次打卡都应该沉淀成下一次 Fork 的母本材料。' },
+      { color: 'violet', size: 2, title: '母本继承', detail: parent.name, why: '保留已验证结构，只变异人群、交付或渠道。' },
+      { color: 'violet', size: 1, title: '北极星指标', detail: risk[2], why: '所有行动最后都要回到一个能判断继续、变异或终止的指标。' }
+    ];
+    $('decision-map').innerHTML = `
+      <div class="map-cloud">
+        ${nodes.map((n, i) => `<button class="map-node ${n.color} size-${n.size}" data-index="${i}" data-title="${escapeHtml(n.title)}" data-detail="${escapeHtml(n.detail)}" data-why="${escapeHtml(n.why)}">${escapeHtml(n.title)}</button>`).join('')}
+      </div>
+      <div class="map-legend"><span>绿色=获客入口</span><span>黄色=决策逻辑</span><span>蓝色=交付与证据</span><span>紫色=母本与指标</span></div>`;
+    const selected = [];
+    const renderDetail = node => {
+      $('map-title').textContent = node.dataset.title;
+      $('map-detail').innerHTML = `
+        <div class="map-insight">
+          <span class="tag">${escapeHtml(node.textContent)}</span>
+          <div>${escapeHtml(node.dataset.detail)}</div>
+          <div class="hint">${escapeHtml(node.dataset.why)}</div>
+          <div><b>当前决策路径</b><div class="map-path">${selected.length ? selected.map(text => `<span>${escapeHtml(text)}</span>`).join('') : '<span>点击左侧词条，把你的决策线索串起来</span>'}</div></div>
+        </div>`;
+    };
+    document.querySelectorAll('.map-node').forEach(node => node.onclick = () => {
+      node.classList.toggle('active');
+      const title = node.dataset.title;
+      const index = selected.indexOf(title);
+      if (index >= 0) selected.splice(index, 1);
+      else selected.push(title);
+      renderDetail(node);
+    });
+    const first = document.querySelector('.map-node.size-3');
+    if (first) renderDetail(first);
+  }
+
   function buildForkExportJSON() {
     if (!currentFork) return null;
     const parent = normalizeSpecimen(specimens.find(item => item.id === currentFork.parent) || defaultSpecimen);
@@ -1114,6 +1166,7 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
       mutation_diff: mutationDiff, fork_mode: 'experiment',
       sandbox: tasks.map(t => ({day: t[0], title: t[1], desc: t[2], metric: t[3], done: false, evidence: ''})), baseTrust: 46, trust: 46, negativeEvidence: 0 };
     renderExperimentSandbox();
+    renderDecisionMap(parent, skillRaw, audienceRaw, risk);
     $('result-actions').classList.remove('hidden');
     $('protocol-json').textContent = JSON.stringify(buildForkExportJSON(), null, 2);
     updateConstitutionChecker();
