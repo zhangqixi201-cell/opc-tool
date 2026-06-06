@@ -120,6 +120,26 @@
     .review-card { border: 1px solid #65f5ae44; background: #65f5ae08; border-radius: 13px; padding: 13px; margin-top: 12px; }
     .review-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
     .review-card-grid div { background: #ffffff06; padding: 8px; border-radius: 8px; font-size: 11px; }
+    .timeline { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+    .day-card { min-width: 120px; border: 1px solid var(--line); background: #ffffff05; border-radius: 12px; padding: 10px; transition: .25s ease; }
+    .day-card.done { border-color: #65f5ae88; background: #65f5ae14; transform: translateY(-2px); }
+    .day-card b { display: block; color: var(--violet); margin-bottom: 5px; }
+    .progress-bar { height: 10px; background: #ffffff0d; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--blue)); transition: width .4s ease; }
+    .score-bump { animation: bump .35s ease; }
+    @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .modal { position: fixed; inset: 0; display: grid; place-items: center; background: #0009; z-index: 20; padding: 20px; }
+    .modal-card { max-width: 520px; width: 100%; border: 1px solid #65f5ae55; background: var(--panel); border-radius: 18px; padding: 22px; box-shadow: 0 20px 80px #000; }
+    .risk-panel { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: center; }
+    .gauge { width: 160px; height: 86px; border-radius: 160px 160px 0 0; background: conic-gradient(from 270deg, var(--green) 0 60deg, var(--orange) 60deg 120deg, var(--red) 120deg 180deg, transparent 180deg); position: relative; overflow: hidden; }
+    .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 32px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); }
+    .needle { position: absolute; width: 70px; height: 3px; background: var(--text); left: 80px; bottom: 2px; transform-origin: left center; transform: rotate(-25deg); transition: transform .4s ease; z-index: 2; }
+    .flow-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .map-canvas { min-height: 260px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff04; padding: 12px; position: relative; }
+    .map-node { border: 1px solid #ffffff22; border-radius: 12px; padding: 9px; margin: 8px; display: inline-block; cursor: pointer; font-size: 11px; }
+    .map-node.green { background: #65f5ae18; color: var(--green); } .map-node.yellow { background: #ffb86b18; color: var(--orange); } .map-node.blue { background: #63b3ff18; color: var(--blue); }
+    .redteam-card { border: 1px solid var(--line); border-radius: 12px; background: #ffffff05; padding: 12px; margin-top: 8px; }
+    .reverse-output { margin-top: 10px; }
     .audit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
     .audit-item { border: 1px solid var(--line); background: #ffffff05; border-radius: 10px; padding: 9px; font-size: 11px; }
     .audit-item b { color: var(--blue); display: block; margin-bottom: 2px; }
@@ -136,7 +156,7 @@
     footer { color: #596579; border-top: 1px solid #ffffff0c; margin-top: 45px; padding: 22px 0; font-size: 11px; display: flex; justify-content: space-between; }
     @media (max-width: 800px) {
       header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top { grid-template-columns: 1fr 1fr; }
-      .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary, .review-card-grid { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
+      .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary, .review-card-grid, .risk-panel, .flow-map { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
     }
   </style>
 </head>
@@ -289,6 +309,13 @@
       <p class="sub">母本不是课程模板，而是带边界的经营实验基因。默认母本、手动新增标本和 Fork 保存的新母本都会出现在这里。</p>
       <div class="action-row"><button class="ghost" id="random-specimen">随机生成一个示例母本</button><span id="library-status" class="status"></span></div>
       <div id="specimen-list" class="library"></div>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <h2>母本逆向编译器</h2>
+      <p class="sub">粘贴一段爆款文章、销售信或推文，系统会先用本地规则拆成可 Fork 的“伪母本”。未来可在这里接入 LLM API。</p>
+      <textarea id="reverse-input" placeholder="粘贴你想模仿的内容：它服务谁？解决什么痛点？如何收费或交付？"></textarea>
+      <div class="action-row"><button class="primary" id="reverse-compile">逆向编译为 OPC 母本</button><button class="ghost" id="reverse-save">保存伪母本</button></div>
+      <div id="reverse-output" class="reverse-output"></div>
     </section>
   </main>
 
@@ -574,6 +601,50 @@
     $('library-status').textContent = `✓ 已生成示例母本：${item.name}`;
   };
 
+  let reverseDraft = null;
+  $('reverse-compile').onclick = () => {
+    const text = $('reverse-input').value.trim();
+    if (text.length < 20) {
+      $('reverse-output').innerHTML = '<div class="status error">请至少粘贴 20 个字以上的文章、销售信或推文。</div>';
+      return;
+    }
+    const audience = /学生|大学生|家长|创始人|老板|打工人|创作者|老师|程序员/.exec(text)?.[0] || '有明确痛点的早期用户';
+    const value = /提升|解决|拿到|完成|变现|增长|转化|提分|省时/.exec(text)?.[0] || '获得可感知结果';
+    const priceHint = /￥|¥|元|付费|报价|咨询|课程|会员/.test(text) ? '付费诊断 / 课程 / 咨询' : '先免费诊断，再转付费体验';
+    reverseDraft = {
+      id: makeId('opc-reverse'), name: `逆向母本：${audience} ${value}`, author: '逆向编译器',
+      skill: `帮助${audience}${value}`, audience, action: `完成一次围绕“${value}”的最小诊断`,
+      metric: '获得 1 次明确反馈或付费意向', evidence: '由外部文本逆向生成，等待验证',
+      fit: '原文已有清晰痛点、承诺或行动号召', fail: '无法提取客群或变现路径，需要人工补充',
+      tags: ['逆向编译', '伪母本'], parent: '', source: 'user'
+    };
+    $('reverse-output').innerHTML = `
+      <div class="gene"><b>伪母本草案</b>
+      目标客群：${escapeHtml(reverseDraft.audience)}<br>
+      价值主张：${escapeHtml(reverseDraft.skill)}<br>
+      变现路径：${escapeHtml(priceHint)}<br>
+      最小动作：${escapeHtml(reverseDraft.action)}</div>
+      <pre>target_audience: ${escapeHtml(reverseDraft.audience)}
+value_proposition: ${escapeHtml(reverseDraft.skill)}
+monetization_logic: ${escapeHtml(priceHint)}
+minimum_action: ${escapeHtml(reverseDraft.action)}
+success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
+  };
+
+  $('reverse-save').onclick = () => {
+    if (!reverseDraft) {
+      $('reverse-output').innerHTML = '<div class="status error">请先完成一次逆向编译。</div>';
+      return;
+    }
+    specimens.push(reverseDraft);
+    saveSpecimens();
+    activeCategory = '全部';
+    renderAll();
+    $('parent-select').value = reverseDraft.id;
+    $('reverse-output').innerHTML += `<div class="status success">✓ 已保存伪母本：${escapeHtml(reverseDraft.name)}</div>`;
+    reverseDraft = null;
+  };
+
   function auditExperiment(parent, skill, audience, hours, risk, target) {
     const vagueAudience = audience.length < 10 || /大学生|年轻人|所有人|职场人|创业者$/.test(audience);
     const vagueSkill = skill.length < 10 || /写代码|设计|英语|赚钱|做内容$/.test(skill);
@@ -596,7 +667,115 @@
     return { dimensions, score: Math.min(score, 100), repairs };
   }
 
-  $('generate').onclick = () => {
+  function renderExperimentSandbox() {
+    if (!currentFork) return;
+    $('experiment-sandbox').innerHTML = currentFork.sandbox.map((task, index) => `
+      <div class="day-card ${task.done ? 'done' : ''}" data-index="${index}">
+        <b>Day ${task.day}</b>
+        <label><input type="checkbox" class="sandbox-check" data-index="${index}" ${task.done ? 'checked' : ''}> ${escapeHtml(task.title)}</label>
+        <p class="sub">${escapeHtml(task.desc)}</p>
+        <button class="ghost sandbox-evidence" data-index="${index}">提交今日证据</button>
+        ${task.evidence ? `<p class="sub">证据：${escapeHtml(task.evidence)}</p>` : ''}
+      </div>`).join('');
+    document.querySelectorAll('.sandbox-check').forEach(box => box.onchange = () => {
+      const task = currentFork.sandbox[+box.dataset.index];
+      task.done = box.checked;
+      if (box.checked) currentFork.trust = Math.min(100, currentFork.trust + 10);
+      else currentFork.trust = Math.max(10, currentFork.trust - 10);
+      updateSandboxState();
+    });
+    document.querySelectorAll('.sandbox-evidence').forEach(button => button.onclick = () => {
+      const task = currentFork.sandbox[+button.dataset.index];
+      const evidence = prompt(`提交 Day ${task.day} 证据：`, task.evidence || '');
+      if (evidence === null) return;
+      task.evidence = evidence.trim();
+      if (/没人|0|拒绝|失败|无回复|不愿意|负面/.test(task.evidence)) currentFork.negativeEvidence += 1;
+      updateSandboxState();
+    });
+    syncSandboxProgress(false);
+  }
+
+  function updateSandboxState(animate = true) {
+    renderExperimentSandbox();
+    syncSandboxProgress(animate);
+    updateRiskDashboard();
+    if (currentFork.sandbox.every(t => t.done)) showCompletionModal();
+  }
+
+  function syncSandboxProgress(animate = true) {
+    const doneCount = currentFork.sandbox.filter(t => t.done).length;
+    const progress = Math.round(doneCount / currentFork.sandbox.length * 100);
+    $('sandbox-progress').style.width = `${progress}%`;
+    $('sandbox-day').textContent = `Day ${doneCount}/7`;
+    const scoreEl = document.querySelector('.score strong');
+    scoreEl.textContent = `${currentFork.trust}%`;
+    if (animate) { scoreEl.classList.remove('score-bump'); void scoreEl.offsetWidth; scoreEl.classList.add('score-bump'); }
+  }
+
+  function showCompletionModal() {
+    if (document.getElementById('complete-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'complete-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-card"><h2>实验完成</h2><p class="sub">你的 7 天实验已跑完，最终可信度 ${currentFork.trust}%。现在可以复盘并保存为新母本。</p><div class="action-row"><button class="primary" id="modal-review">进入复盘</button><button class="ghost" id="modal-close">稍后处理</button></div></div>`;
+    document.body.appendChild(modal);
+    $('modal-review').onclick = () => { modal.remove(); $('review-panel').classList.remove('hidden'); };
+    $('modal-close').onclick = () => modal.remove();
+  }
+
+  function updateRiskDashboard() {
+    if (!currentFork || !$('risk-needle')) return;
+    const riskScore = Math.max(10, Math.min(95, 100 - currentFork.trust + currentFork.negativeEvidence * 18));
+    $('risk-needle').style.transform = `rotate(${riskScore * 1.8 - 90}deg)`;
+    $('trust-progress').style.width = `${currentFork.trust}%`;
+    $('trust-water').textContent = `${currentFork.trust}%，已提交 ${currentFork.sandbox.filter(t => t.evidence).length} 条证据`;
+    $('risk-label').textContent = riskScore > 70 ? '风险状态：红色熔断预警' : riskScore > 42 ? '风险状态：黄色观察' : '风险状态：绿色可推进';
+    $('meltdown-warning').textContent = currentFork.negativeEvidence >= 2 ? '项目熔断风险：负面证据偏多，建议暂停并缩小客群。' : '风险可控：继续收集真实证据。';
+  }
+
+  function renderDecisionMap(parent, skill, audience, risk) {
+    const nodes = [
+      ['green', '获客渠道', `${audience}：小红书/私域/熟人转介绍`],
+      ['yellow', '定价策略', `先用低门槛诊断验证 ${risk[2]}`],
+      ['yellow', '客户筛选', parent.fit || '选择痛点明确且愿意行动的人'],
+      ['blue', '交付物', skill],
+      ['blue', '证据资产', '诊断记录、反馈原话、复盘卡']
+    ];
+    $('decision-map').innerHTML = nodes.map((n, i) => `<button class="map-node ${n[0]}" data-title="${escapeHtml(n[1])}" data-detail="${escapeHtml(n[2])}">${escapeHtml(n[1])}</button>`).join('<br>');
+    document.querySelectorAll('.map-node').forEach(node => node.onclick = () => {
+      $('map-title').textContent = node.dataset.title;
+      $('map-detail').textContent = node.dataset.detail;
+    });
+  }
+
+  $('generate').onclick = () => showRedTeam();
+
+  function showRedTeam() {
+    const skill = $('skill').value.trim() || '你的核心能力';
+    const audience = $('audience').value.trim() || '第一批客户';
+    const risk = $('risk').selectedOptions[0].text;
+    $('empty').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('result-actions').classList.add('hidden');
+    $('result').innerHTML = `
+      <div class="fork-head"><div><div class="fork-id">Adversarial Check</div><h2>红队攻击模拟器</h2><p class="sub">生成 7 天计划前，先承受一次现实质疑。</p></div></div>
+      <div class="redteam-card"><b>挑剔的客户</b><p>“为什么我要为『${escapeHtml(skill)}』付费？请给我三个不能自己搜索解决的理由。”</p><textarea id="red-customer" placeholder="回应客户质疑，并补强你的价值主张"></textarea></div>
+      <div class="redteam-card"><b>理性的风控</b><p>“你的最大风险是『${escapeHtml(risk)}』。你准备投入的时间、人情成本和失败成本算清了吗？”</p><textarea id="red-risk" placeholder="写下你要缩小的范围、成本或验证口径"></textarea></div>
+      <div class="redteam-card"><b>嫉妒的同行</b><p>“${escapeHtml(audience)} 这个人群已经有人服务了，你凭什么还有机会？”</p><textarea id="red-rival" placeholder="写下你的差异化：人群、交付、资产三选一"></textarea></div>
+      <div class="action-row"><button class="ghost" id="red-apply">把红队建议写回输入</button><button class="primary" id="red-continue">通过红队，生成 7 天沙盘</button></div>
+      <div id="red-status" class="status"></div>`;
+    $('red-apply').onclick = () => {
+      const rival = $('red-rival').value.trim();
+      const customer = $('red-customer').value.trim();
+      if (customer) $('skill').value = `${skill}（价值主张：${customer.slice(0, 34)}）`;
+      if (rival) $('audience').value = `${audience}中的高意愿细分用户`;
+      renderLiveFeedback();
+      $('red-status').textContent = '已把红队修正写回左侧变量。';
+    };
+    $('red-continue').onclick = () => buildForkFromInputs();
+  }
+
+  function buildForkFromInputs() {
     const parent = selectedSpecimen();
     const identityRaw = $('identity').value || '未命名创作者';
     const skillRaw = $('skill').value || '你的核心能力';
@@ -626,12 +805,27 @@
       <div class="fork-head"><div><div class="fork-id">${forkId} ← ${escapeHtml(parent.id)}</div>
       <h2>${skill}</h2><p class="sub">${identity} · ${audience} · 7 天 / ${hours} 小时</p></div>
       <div class="score"><strong>46%</strong><span class="sub">初始可信度</span></div></div>
+      <div class="section"><div class="section-title"><i></i>动态风险仪表盘</div>
+      <div class="risk-panel">
+        <div><div class="gauge"><span id="risk-needle" class="needle"></span></div><p class="sub" id="risk-label">风险状态：黄色观察</p></div>
+        <div>
+          <div class="feedback-line"><b>资金流红线</b><span id="cash-days">可支撑 ${Math.max(7, Math.round(hours * 1.8))} 天实验节奏</span></div>
+          <div class="feedback-line"><b>信任度水位</b><span id="trust-water">46%，等待证据累积</span></div>
+          <div class="feedback-line"><b>熔断预警</b><span id="meltdown-warning">若连续负面证据超过 2 条，建议暂停并缩小人群。</span></div>
+          <div class="progress-bar"><div id="trust-progress" class="progress-fill" style="width:46%"></div></div>
+        </div>
+      </div></div>
       <div class="section"><div class="section-title"><i></i>这次 Fork 要验证什么</div>
       <div class="gene"><b style="color:var(--orange)">最大风险假设</b>${risk[0]}。策略：${risk[1]}。唯一北极星指标：<span style="color:var(--green)">${risk[2]}</span>。</div></div>
       <div class="section"><div class="section-title"><i></i>变异记录 Mutation Diff</div>
       <div class="diff"><span>${escapeHtml(parent.skill)}<br>${escapeHtml(parent.audience)}<br><small class="sub">母本条件</small></span><span class="arrow">→</span><span class="to">${skill}<br>${audience}</span></div></div>
       <div class="section"><div class="section-title"><i></i>7 天最小经营实验</div>
       <div class="tasks">${tasks.map(t => `<div class="task"><span class="day">D${t[0]}</span><span><b>${t[1]}</b><small>${t[2]}</small></span><span class="metric">${t[3]}</span></div>`).join('')}</div></div>
+      <div class="section"><div class="section-title"><i></i>7 天实验实时沙盘 <span id="sandbox-day" class="tag">Day 0/7</span></div>
+      <div class="progress-bar"><div id="sandbox-progress" class="progress-fill"></div></div>
+      <div id="experiment-sandbox" class="timeline"></div></div>
+      <div class="section"><div class="section-title"><i></i>决策图谱</div>
+      <div class="flow-map"><div id="decision-map" class="map-canvas"></div><div class="gene"><b id="map-title">点击节点查看详情</b><div id="map-detail" class="sub">绿色=获客渠道，黄色=决策逻辑，蓝色=交付物。</div></div></div></div>
       <div class="section"><div class="section-title"><i></i>系统质检与实验质量评分</div>
       <div class="quality-score"><strong>${audit.score} / 100</strong><span><b>OPC 实验分</b><br><small class="sub">生成后自动审查，不让宽泛方案直接进入执行。</small></span></div>
       <div class="audit-grid" style="margin-top:8px">${audit.dimensions.map(d => `<div class="audit-item ${d[1] ? 'pass' : 'warn'}"><b>${d[1] ? '✓' : '△'} ${d[0]}</b>${escapeHtml(d[2])}</div>`).join('')}</div>
@@ -640,7 +834,8 @@
       <div class="section"><div class="section-title"><i></i>辅助裂变方向</div><div id="fork-simulator" class="suggestions"></div></div>`;
     currentFork = { id: forkId, parent: parent.id, identity: identityRaw, skill: skillRaw, audience: audienceRaw,
       action: tasks[4][1] + '：' + tasks[4][2], metric: risk[2], evidence: '等待验证',
-      experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null };
+      experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null,
+      sandbox: tasks.map(t => ({day: t[0], title: t[1], desc: t[2], metric: t[3], done: false, evidence: ''})), trust: 46, negativeEvidence: 0 };
     $('protocol-json').textContent = JSON.stringify({
       fork_id: forkId, parent: parent.id, hypothesis: risk[0],
       mutation: { audience: audienceRaw, offer: skillRaw },
@@ -653,6 +848,9 @@
     $('review-result').innerHTML = '';
     $('fork-status').textContent = '';
     $('evidence-input').value = '';
+    renderExperimentSandbox();
+    renderDecisionMap(parent, skillRaw, audienceRaw, risk);
+    updateRiskDashboard();
     $('fork-simulator').innerHTML = $('mutation-list').innerHTML;
     $('fork-simulator').querySelectorAll('.suggestion').forEach(button => button.onclick = () => {
       const index = +button.dataset.index;
