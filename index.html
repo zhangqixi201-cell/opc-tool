@@ -131,9 +131,10 @@
     .modal { position: fixed; inset: 0; display: grid; place-items: center; background: #0009; z-index: 20; padding: 20px; }
     .modal-card { max-width: 520px; width: 100%; border: 1px solid #65f5ae55; background: var(--panel); border-radius: 18px; padding: 22px; box-shadow: 0 20px 80px #000; }
     .risk-panel { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: center; }
-    .gauge { width: 160px; height: 86px; border-radius: 160px 160px 0 0; background: conic-gradient(from 270deg, var(--green) 0 60deg, var(--orange) 60deg 120deg, var(--red) 120deg 180deg, transparent 180deg); position: relative; overflow: hidden; }
-    .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 32px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); }
-    .needle { position: absolute; width: 70px; height: 3px; background: var(--text); left: 80px; bottom: 2px; transform-origin: left center; transform: rotate(-25deg); transition: transform .4s ease; z-index: 2; }
+    .gauge { width: 160px; height: 92px; border-radius: 160px 160px 0 0; background: conic-gradient(from 270deg, var(--green) 0 60deg, var(--orange) 60deg 120deg, var(--red) 120deg 180deg, transparent 180deg); position: relative; overflow: hidden; }
+    .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 34px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); z-index: 1; }
+    .needle { position: absolute; width: 68px; height: 4px; background: var(--text); left: 80px; bottom: 5px; transform-origin: 0 50%; transform: rotate(0deg); transition: transform .45s cubic-bezier(.2,.8,.2,1); z-index: 3; border-radius: 999px; box-shadow: 0 0 10px #0008; }
+    .needle::after { content: ""; position: absolute; width: 11px; height: 11px; left: -5px; top: -3.5px; border-radius: 50%; background: var(--text); }
     .flow-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .map-canvas { min-height: 260px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff04; padding: 12px; position: relative; }
     .map-node { border: 1px solid #ffffff22; border-radius: 12px; padding: 9px; margin: 8px; display: inline-block; cursor: pointer; font-size: 11px; }
@@ -726,7 +727,8 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
   function updateRiskDashboard() {
     if (!currentFork || !$('risk-needle')) return;
     const riskScore = Math.max(10, Math.min(95, 100 - currentFork.trust + currentFork.negativeEvidence * 18));
-    $('risk-needle').style.transform = `rotate(${riskScore * 1.8 - 90}deg)`;
+    const angle = -180 + riskScore * 1.8;
+    $('risk-needle').style.transform = `rotate(${angle}deg)`;
     $('trust-progress').style.width = `${currentFork.trust}%`;
     $('trust-water').textContent = `${currentFork.trust}%，已提交 ${currentFork.sandbox.filter(t => t.evidence).length} 条证据`;
     $('risk-label').textContent = riskScore > 70 ? '风险状态：红色熔断预警' : riskScore > 42 ? '风险状态：黄色观察' : '风险状态：绿色可推进';
