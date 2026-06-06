@@ -120,10 +120,20 @@
     .review-card { border: 1px solid #65f5ae44; background: #65f5ae08; border-radius: 13px; padding: 13px; margin-top: 12px; }
     .review-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
     .review-card-grid div { background: #ffffff06; padding: 8px; border-radius: 8px; font-size: 11px; }
-    .timeline { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 6px; }
-    .day-card { min-width: 120px; border: 1px solid var(--line); background: #ffffff05; border-radius: 12px; padding: 10px; transition: .25s ease; }
+    .sandbox-board { margin-top: 10px; display: grid; gap: 10px; }
+    .sandbox-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .sandbox-stat { border: 1px solid var(--line); background: #ffffff05; border-radius: 10px; padding: 10px; font-size: 11px; color: var(--muted); }
+    .sandbox-stat b { display: block; color: var(--green); font-size: 18px; line-height: 1.1; margin-bottom: 3px; }
+    .timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 9px; }
+    .day-card { min-height: 245px; border: 1px solid var(--line); background: #ffffff05; border-radius: 12px; padding: 11px; transition: .25s ease; }
     .day-card.done { border-color: #65f5ae88; background: #65f5ae14; transform: translateY(-2px); }
+    .day-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0; }
     .day-card b { display: block; color: var(--violet); margin-bottom: 5px; }
+    .day-card textarea { min-height: 64px; font-size: 11px; margin-top: 8px; }
+    .check-dot { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line); background: #ffffff08; color: var(--muted); display: grid; place-items: center; flex: none; }
+    .day-card.done .check-dot { color: #07130d; background: var(--green); border-color: var(--green); }
+    .sandbox-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .sandbox-actions .ghost { padding: 7px 8px; }
     .progress-bar { height: 10px; background: #ffffff0d; border-radius: 999px; overflow: hidden; margin-top: 8px; }
     .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--blue)); transition: width .4s ease; }
     .score-bump { animation: bump .35s ease; }
@@ -133,8 +143,8 @@
     .risk-panel { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: center; }
     .gauge { width: 160px; height: 92px; border-radius: 160px 160px 0 0; background: conic-gradient(from 270deg, var(--green) 0 60deg, var(--orange) 60deg 120deg, var(--red) 120deg 180deg, transparent 180deg); position: relative; overflow: hidden; }
     .gauge::after { content: ""; position: absolute; width: 92px; height: 46px; left: 34px; bottom: 0; border-radius: 92px 92px 0 0; background: var(--panel); z-index: 1; }
-    .needle { position: absolute; width: 68px; height: 4px; background: var(--text); left: 80px; bottom: 5px; transform-origin: 0 50%; transform: rotate(0deg); transition: transform .45s cubic-bezier(.2,.8,.2,1); z-index: 3; border-radius: 999px; box-shadow: 0 0 10px #0008; }
-    .needle::after { content: ""; position: absolute; width: 11px; height: 11px; left: -5px; top: -3.5px; border-radius: 50%; background: var(--text); }
+    .needle { position: absolute; width: 4px; height: 68px; background: var(--text); left: 78px; bottom: 0; transform-origin: 50% 100%; transform: rotate(0deg); transition: transform .45s cubic-bezier(.2,.8,.2,1); z-index: 3; border-radius: 999px; box-shadow: 0 0 10px #0008; }
+    .needle::after { content: ""; position: absolute; width: 13px; height: 13px; left: -4.5px; bottom: -6.5px; border-radius: 50%; background: var(--text); }
     .flow-map { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .map-canvas { min-height: 260px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff04; padding: 12px; position: relative; }
     .map-node { border: 1px solid #ffffff22; border-radius: 12px; padding: 9px; margin: 8px; display: inline-block; cursor: pointer; font-size: 11px; }
@@ -161,7 +171,7 @@
     .review-form textarea { min-height: 58px; }
     footer { color: #596579; border-top: 1px solid #ffffff0c; margin-top: 45px; padding: 22px 0; font-size: 11px; display: flex; justify-content: space-between; }
     @media (max-width: 800px) {
-      header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top { grid-template-columns: 1fr 1fr; }
+      header, .grid { grid-template-columns: 1fr; } .protocol-grid, .spec-top, .sandbox-summary { grid-template-columns: 1fr 1fr; }
       .dna { grid-template-columns: 1fr 1fr; } .library, .suggestions, .audit-grid, .boundary, .review-card-grid, .risk-panel, .flow-map { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } nav .badge { display: none; }
     }
   </style>
@@ -849,6 +859,68 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     if (animate) { scoreEl.classList.remove('score-bump'); void scoreEl.offsetWidth; scoreEl.classList.add('score-bump'); }
   }
 
+  function renderExperimentSandbox() {
+    if (!currentFork) return;
+    if (!currentFork.sandbox.some(t => String(t.day) === '6')) {
+      currentFork.sandbox.splice(Math.max(0, currentFork.sandbox.length - 1), 0, {
+        day: '6',
+        title: '跟进反馈并调整邀约',
+        desc: '记录对方犹豫点、拒绝理由或愿意继续的条件',
+        metric: '获得 1 条真实反馈',
+        done: false,
+        evidence: ''
+      });
+    }
+    const doneCount = currentFork.sandbox.filter(t => t.done).length;
+    const evidenceCount = currentFork.sandbox.filter(t => t.evidence).length;
+    const nextTask = currentFork.sandbox.find(t => !t.done);
+    $('experiment-sandbox').innerHTML = `
+      <div class="sandbox-summary">
+        <div class="sandbox-stat"><b>${doneCount}/${currentFork.sandbox.length}</b>已完成打卡</div>
+        <div class="sandbox-stat"><b>${evidenceCount}</b>已提交证据</div>
+        <div class="sandbox-stat"><b>${nextTask ? `D${nextTask.day}` : '完成'}</b>${nextTask ? '下一步行动' : '进入复盘'}</div>
+      </div>
+      <div class="timeline">
+        ${currentFork.sandbox.map((task, index) => `
+          <div class="day-card ${task.done ? 'done' : ''}" data-index="${index}">
+            <header><div><b>Day ${task.day}</b><strong>${escapeHtml(task.title)}</strong></div><span class="check-dot">${task.done ? '✓' : ''}</span></header>
+            <p class="sub">${escapeHtml(task.desc)}</p>
+            <div class="metric">${escapeHtml(task.metric)}</div>
+            <textarea class="sandbox-note" data-index="${index}" placeholder="记录今日证据：完成了什么、拿到什么反馈、有没有拒绝或转化">${escapeHtml(task.evidence || '')}</textarea>
+            <div class="sandbox-actions">
+              <button class="ghost sandbox-save" data-index="${index}">保存证据</button>
+              <button class="ghost sandbox-toggle" data-index="${index}">${task.done ? '撤销打卡' : '完成打卡'}</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    document.querySelectorAll('.sandbox-toggle').forEach(button => button.onclick = () => {
+      const task = currentFork.sandbox[+button.dataset.index];
+      task.done = !task.done;
+      updateSandboxState();
+    });
+    document.querySelectorAll('.sandbox-save').forEach(button => button.onclick = () => {
+      const task = currentFork.sandbox[+button.dataset.index];
+      const note = document.querySelector(`.sandbox-note[data-index="${button.dataset.index}"]`).value.trim();
+      task.evidence = note;
+      task.done = task.done || Boolean(note);
+      updateSandboxState();
+    });
+    syncSandboxProgress(false);
+  }
+
+  function syncSandboxProgress(animate = true) {
+    const doneCount = currentFork.sandbox.filter(t => t.done).length;
+    const evidenceCount = currentFork.sandbox.filter(t => t.evidence).length;
+    currentFork.negativeEvidence = currentFork.sandbox.filter(t => /没人|0|拒绝|失败|无回复|不愿意|负面/.test(t.evidence || '')).length;
+    currentFork.trust = Math.max(10, Math.min(100, (currentFork.baseTrust || 46) + doneCount * 6 + evidenceCount * 3 - currentFork.negativeEvidence * 8));
+    const progress = Math.round(doneCount / currentFork.sandbox.length * 100);
+    $('sandbox-progress').style.width = `${progress}%`;
+    $('sandbox-day').textContent = `Day ${doneCount}/${currentFork.sandbox.length}`;
+    const scoreEl = document.querySelector('.score strong');
+    scoreEl.textContent = `${currentFork.trust}%`;
+    if (animate) { scoreEl.classList.remove('score-bump'); void scoreEl.offsetWidth; scoreEl.classList.add('score-bump'); }
+  }
+
   function showCompletionModal() {
     if (document.getElementById('complete-modal')) return;
     const modal = document.createElement('div');
@@ -863,7 +935,7 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
   function updateRiskDashboard() {
     if (!currentFork || !$('risk-needle')) return;
     const riskScore = Math.max(10, Math.min(95, 100 - currentFork.trust + currentFork.negativeEvidence * 18));
-    const angle = -180 + riskScore * 1.8;
+    const angle = -90 + riskScore * 1.8;
     $('risk-needle').style.transform = `rotate(${angle}deg)`;
     $('trust-progress').style.width = `${currentFork.trust}%`;
     $('trust-water').textContent = `${currentFork.trust}%，已提交 ${currentFork.sandbox.filter(t => t.evidence).length} 条证据`;
@@ -1040,7 +1112,9 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
       action: tasks[4][1] + '：' + tasks[4][2], metric: risk[2], evidence: '等待验证',
       experiment: {window_days: 7, budget_hours: hours}, hypothesis: risk[0], threshold: target, auditScore: audit.score, review: null,
       mutation_diff: mutationDiff, fork_mode: 'experiment',
-      sandbox: tasks.map(t => ({day: t[0], title: t[1], desc: t[2], metric: t[3], done: false, evidence: ''})), trust: 46, negativeEvidence: 0 };
+      sandbox: tasks.map(t => ({day: t[0], title: t[1], desc: t[2], metric: t[3], done: false, evidence: ''})), baseTrust: 46, trust: 46, negativeEvidence: 0 };
+    renderExperimentSandbox();
+    $('result-actions').classList.remove('hidden');
     $('protocol-json').textContent = JSON.stringify(buildForkExportJSON(), null, 2);
     updateConstitutionChecker();
     $('result-actions').classList.remove('hidden');
