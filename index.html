@@ -162,6 +162,11 @@
     .map-path span { border-radius: 999px; padding: 5px 8px; background: #ffffff08; color: var(--muted); font-size: 10px; }
     .redteam-card { border: 1px solid var(--line); border-radius: 12px; background: #ffffff05; padding: 12px; margin-top: 8px; }
     .reverse-output { margin-top: 10px; }
+    .reverse-table { display: grid; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #ffffff04; margin-top: 10px; }
+    .reverse-row { display: grid; grid-template-columns: 140px 1fr; border-bottom: 1px solid var(--line); }
+    .reverse-row:last-child { border-bottom: 0; }
+    .reverse-key { color: var(--green); background: #65f5ae0b; padding: 10px; font-weight: 800; font-size: 12px; }
+    .reverse-value { padding: 10px; color: #cbd5e1; font-size: 12px; }
     .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
     .mode-toggle label { margin: 0; border: 1px solid var(--line); border-radius: 11px; padding: 10px; background: #ffffff05; cursor: pointer; }
     .mode-toggle input { width: auto; margin-right: 6px; }
@@ -793,7 +798,190 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     reverseDraft = null;
   };
 
-  function auditExperiment(parent, skill, audience, hours, risk, target) {
+  function reverseCompileToSpecimen(rawText) {
+    const text = String(rawText || '').replace(/\s+/g, ' ').trim();
+    const warnings = [];
+    const missing_fields = [];
+    const has = words => words.some(word => text.includes(word));
+    const pick = (patterns, fallback = '') => {
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match) return (match[1] || match[0]).trim();
+      }
+      return fallback;
+    };
+
+    const peopleWords = '博主|创作者|学生|家长|老师|创始人|老板|打工人|程序员|设计师|考研学生|大学生|宝妈|自由职业者';
+    const qualifier = pick([/(粉丝过千但互动低于\s*\d+\s*的[^。；，,]*?(?:博主|创作者))/,
+      /(英语\s*\d+\s*-\s*\d+\s*分[^。；，,]*?学生)/, /(非科班[^。；，,]*?(?:学生|程序员|大学生))/,
+      /(早期\s*SaaS[^。；，,]*?(?:创始人|老板|团队))/]);
+    const serviceTarget = qualifier || pick([new RegExp(`([^。；，,]{0,18}(?:${peopleWords}))`)], '有明确痛点但尚未细分的早期用户');
+    if (serviceTarget === '有明确痛点但尚未细分的早期用户') {
+      warnings.push('服务对象不够具体，建议补充阶段、痛点或筛选条件。');
+      missing_fields.push('服务谁');
+    }
+
+    const painPoint = pick([/主要解决([^。；，,]*?(?:问题|痛点|同质化|转化|定位|获客|定价|作品集|结果|效率|信任))/,
+      /痛点是([^。；，,]*)/, /缺乏([^。；，,]*)/, /(内容同质化[^。；，,]*|互动低[^。；，,]*|没有转化[^。；，,]*|缺少项目[^。；，,]*|不会获客[^。；，,]*|不会定价[^。；，,]*|没有作品集[^。；，,]*|没有结果[^。；，,]*|效率低[^。；，,]*|信任不足[^。；，,]*)/],
+      has(['同质化']) ? '内容同质化，缺乏差异化人设' : '');
+    if (!painPoint) missing_fields.push('解决什么痛点');
+
+    const price = pick([/[¥￥]\s*(\d+)/, /收费\s*(\d+)\s*(?:元|一次|\/次)?/, /(\d+)\s*元/]);
+    const hasDiagnosis = has(['诊断']);
+    const hasConsult = has(['咨询']);
+    const hasCourse = has(['课程']);
+    const hasCoach = has(['陪跑']);
+    let pricing = '';
+    if (price) pricing = `¥${price}/次${hasDiagnosis ? '诊断' : hasConsult ? '咨询' : '服务'}${hasCoach ? '，后续升级陪跑服务' : ''}`;
+    else if (has(['付费', '课程', '咨询', '陪跑'])) pricing = '先免费诊断，再转付费服务';
+    else {
+      pricing = '未识别明确收费方式';
+      missing_fields.push('如何收费');
+    }
+
+    const duration = pick([/(\d+\s*分钟)/, /(\d+\s*小时)/]);
+    const deliveryKeyword = pick([/(定位访谈|访谈|诊断|陪跑|训练营|课程|报告|清单|模板|工具包|复盘)/]);
+    let delivery = duration && deliveryKeyword ? `${duration}${deliveryKeyword}` : deliveryKeyword ? `一次${deliveryKeyword}` : '';
+    if (!delivery && hasDiagnosis) delivery = '一次低门槛诊断';
+    if (!delivery) {
+      delivery = '一次低门槛诊断或访谈';
+      warnings.push('交付方式不够明确，建议补充时长、交付物或流程。');
+      missing_fields.push('如何交付');
+    }
+
+    const minimumAction = delivery.includes('访谈') ? `完成一次${duration || '30 分钟'}账号定位访谈`
+      : delivery.includes('诊断') ? '完成一次低门槛诊断，并交付一份问题清单'
+        : delivery.includes('报告') ? '完成一份最小诊断报告'
+          : delivery.includes('陪跑') ? '完成一次 7 天陪跑体验'
+            : `完成${delivery}`;
+
+    const coreHypothesis = price && hasDiagnosis
+      ? '低门槛诊断能建立足够的付费信任，并转化为后续高客单价服务'
+      : delivery.includes('访谈') ? '一次结构化访谈能暴露用户真实痛点，并产生后续服务机会'
+        : has(['作品', '项目']) ? '可展示结果比知识讲解更容易建立付费信任'
+          : '该服务能通过一次最小交付验证用户是否愿意继续付费';
+
+    const served = pick([/服务了\s*(\d+)\s*个客户/, /(\d+)\s*个客户/]);
+    const converted = pick([/其中\s*(\d+)\s*个[^。；，,]*(?:转化|续费|买了|购买)/, /(\d+)\s*个[^。；，,]*(?:转化|续费)/]);
+    const percent = served && converted ? Math.round(Number(converted) / Number(served) * 100) : null;
+    const successMetric = served && converted ? `${served} 个客户中 ${converted} 个转化陪跑，转化率 ${percent}%`
+      : pick([/(\d+\s*\/\s*\d+)/, /(转化率\s*\d+%)/, /(获得\s*1\s*个付费客户)/, /(完成\s*3\s*次访谈)/, /(招募\s*5\s*个体验用户)/], '获得 1 次明确付费意向或后续服务机会');
+
+    const monetizationPath = hasDiagnosis && hasCoach && price ? `诊断（¥${price}）→ 陪跑（高客单价）`
+      : has(['免费']) && has(['付费']) ? '免费诊断 → 付费体验 → 长期陪跑'
+        : hasCourse ? '体验课 → 正式课程 → 复购/转介绍'
+          : '最小诊断 → 付费服务 → 长期复购';
+
+    const table = {
+      service_target: serviceTarget,
+      pain_point: painPoint || '未识别明确痛点',
+      pricing,
+      delivery,
+      minimum_action: minimumAction,
+      core_hypothesis: coreHypothesis,
+      success_metric: successMetric,
+      monetization_path: monetizationPath
+    };
+
+    const scoreRules = [
+      ['service_target', 15, !missing_fields.includes('服务谁')],
+      ['pain_point', 15, !missing_fields.includes('解决什么痛点')],
+      ['pricing', 15, !missing_fields.includes('如何收费')],
+      ['delivery', 15, !missing_fields.includes('如何交付')],
+      ['minimum_action', 10, Boolean(minimumAction)],
+      ['core_hypothesis', 10, Boolean(coreHypothesis)],
+      ['success_metric', 15, successMetric !== '获得 1 次明确付费意向或后续服务机会'],
+      ['monetization_path', 5, Boolean(monetizationPath)]
+    ];
+    const confidence = scoreRules.reduce((sum, item) => sum + (item[2] ? item[1] : 0), 0);
+    if (successMetric === '获得 1 次明确付费意向或后续服务机会') warnings.push('未识别到真实结果数据，成功指标仍是待验证目标。');
+
+    const reverseId = makeId('opc-reverse');
+    const specimenDraft = {
+      specimen_id: reverseId,
+      id: reverseId,
+      name: `逆向母本：${serviceTarget}`,
+      author: { name: '逆向编译器', contact: '', homepage: '' },
+      parent_id: null,
+      skill: `${delivery}：${table.pain_point}`,
+      audience: serviceTarget,
+      action: minimumAction,
+      metric: successMetric,
+      hypothesis: {
+        statement: coreHypothesis,
+        risk_type: pricing.includes('未识别') ? 'need' : delivery.includes('报告') || delivery.includes('工具包') ? 'delivery' : 'trust'
+      },
+      actions: [{ day: 1, title: minimumAction, detail: delivery, metric: successMetric }],
+      metrics: { success_metric: { name: successMetric, threshold: converted || 1 } },
+      evidence: [{ type: 'external_claim', content: text.slice(0, 260), status: 'unverified' }],
+      risk_control: {
+        fit: `${serviceTarget}已经表现出“${table.pain_point}”相关痛点，并愿意接受${delivery}`,
+        fail: '无法确认具体服务对象、收费方式或交付结果；原文案例不可复现'
+      },
+      fit: `${serviceTarget}已经表现出“${table.pain_point}”相关痛点，并愿意接受${delivery}`,
+      fail: '无法确认具体服务对象、收费方式或交付结果；原文案例不可复现',
+      tags: ['逆向生成 / 待验证', '伪母本'],
+      source: 'reverse',
+      license: 'OPC-1.0',
+      status: 'draft'
+    };
+    return { table, specimenDraft, confidence, missing_fields, warnings };
+  }
+
+  function renderReverseCompileOutput(result) {
+    const labels = [
+      ['服务谁', result.table.service_target],
+      ['解决什么痛点', result.table.pain_point],
+      ['如何收费', result.table.pricing],
+      ['如何交付', result.table.delivery],
+      ['最小可执行动作', result.table.minimum_action],
+      ['核心假设', result.table.core_hypothesis],
+      ['成功指标', result.table.success_metric],
+      ['变现路径', result.table.monetization_path]
+    ];
+    const missing = result.missing_fields.length ? `<div class="status error">仍缺少：${escapeHtml(result.missing_fields.join('、'))}。建议补充后再保存为母本。</div>` : '';
+    const warnings = result.warnings.length ? `<div class="hint">${result.warnings.map(escapeHtml).join('<br>')}</div>` : '';
+    $('reverse-output').innerHTML = `
+      <h3>系统逆向编译输出</h3>
+      <div class="quality-score"><strong>${result.confidence} / 100</strong><span><b>逆向完整度</b><br><small class="sub">从外部文本中抽取 OPC 母本结构，仍需人工验证。</small></span></div>
+      <div class="reverse-table">${labels.map(row => `<div class="reverse-row"><div class="reverse-key">${escapeHtml(row[0])}</div><div class="reverse-value">${escapeHtml(row[1])}</div></div>`).join('')}</div>
+      ${missing}${warnings}
+      <div class="section"><div class="section-title"><i></i>OPC JSON 草案</div><pre>${escapeHtml(JSON.stringify(result.specimenDraft, null, 2))}</pre></div>`;
+  }
+
+  $('reverse-compile').onclick = () => {
+    const text = $('reverse-input').value.trim();
+    if (text.length < 20) {
+      $('reverse-output').innerHTML = '<div class="status error">请至少粘贴 20 个字以上的文章、销售信或推文。</div>';
+      reverseDraft = null;
+      return;
+    }
+    const result = reverseCompileToSpecimen(text);
+    reverseDraft = normalizeSpecimen(result.specimenDraft);
+    reverseDraft.status = validateSpecimen(reverseDraft).status === 'blocked' ? 'draft' : validateSpecimen(reverseDraft).status;
+    renderReverseCompileOutput(result);
+  };
+
+  $('reverse-save').onclick = () => {
+    if (!reverseDraft) {
+      $('reverse-output').innerHTML = '<div class="status error">请先完成一次逆向编译。</div>';
+      return;
+    }
+    const validation = validateSpecimen(reverseDraft);
+    reverseDraft.status = validation.status === 'blocked' ? 'draft' : validation.status;
+    reverseDraft.source = 'reverse';
+    reverseDraft.tags = Array.from(new Set([...(reverseDraft.tags || []), '逆向生成 / 待验证']));
+    specimens.push(reverseDraft);
+    saveSpecimens();
+    activeCategory = '全部';
+    renderAll();
+    $('parent-select').value = reverseDraft.id;
+    renderSimulator();
+    $('reverse-output').innerHTML += `<div class="status success">✓ 已保存伪母本：${escapeHtml(reverseDraft.name)}（逆向生成 / 待验证）</div>`;
+    reverseDraft = null;
+  };
+
+  function auditExperiment(parent, skill, audience, hours, risk, target, mutationDiff = []) {
     const vagueAudience = audience.length < 10 || /大学生|年轻人|所有人|职场人|创业者$/.test(audience);
     const vagueSkill = skill.length < 10 || /写代码|设计|英语|赚钱|做内容$/.test(skill);
     const parentChanged = skill !== parent.skill || audience !== parent.audience;
@@ -812,6 +1000,8 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     if (vagueSkill) repairs.push(`把“${skill}”改写成可交付结果，例如“7 天完成一个可展示的小项目”。`);
     if (!parentChanged) repairs.push('至少修改母本的人群、交付或资产形态之一，并记录修改理由。');
     if (!repairs.length) repairs.push('结构已通过基础质检；下一步重点是获取真实反馈，而不是继续修改文案。');
+    const lowMutation = mutationDiff.find(row => row.quality === 'low');
+    if (lowMutation) repairs.push(`Mutation Diff 提示低质量变异：${lowMutation.reason}`);
     const finalScore = Math.min(score, 100);
     const level = finalScore >= 82 ? '可执行' : finalScore >= 65 ? '建议修改' : finalScore >= 45 ? '过于模糊' : '不可进入实验模式';
     return { dimensions, score: finalScore, level, suggestions: repairs, repairs };
@@ -868,6 +1058,138 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     const scoreEl = document.querySelector('.score strong');
     scoreEl.textContent = `${currentFork.trust}%`;
     if (animate) { scoreEl.classList.remove('score-bump'); void scoreEl.offsetWidth; scoreEl.classList.add('score-bump'); }
+  }
+
+  function generateMutationDiff(parentSpecimen, userInput) {
+    const parent = normalizeSpecimen(parentSpecimen);
+    const same = (a, b) => String(a || '').trim() === String(b || '').trim();
+    const hasAny = (text, words) => words.some(word => String(text || '').includes(word));
+    const isBroadAudience = text => String(text || '').trim().length < 6 || /大学生|年轻人|职场人|所有人|大众|用户|学生$|家长$/.test(text);
+    const isNarrowAudience = text => hasAny(text, ['高一', '高二', '高三', '初中', '小学', '备考', '30 天', '7 天', '转行', '低分', '提分', '阅读', '口语', '面试', '新手', '宝妈', '自由职业', '创业者', '80-100']);
+    const isBroadSkill = text => String(text || '').trim().length < 6 || /^(写代码|英语|设计|做内容|编程|运营|营销|咨询)$/.test(String(text || '').trim());
+    const isOutcomeSkill = text => hasAny(text, ['7 天', '完成', '诊断', '可展示', '项目', '交付', '结果', '作品']);
+    const rows = [];
+
+    const audience = String(userInput.audience || '').trim();
+    if (!same(parent.audience, audience)) {
+      const type = isBroadAudience(audience) || audience.length < String(parent.audience || '').length * 0.55
+        ? 'broadened'
+        : isNarrowAudience(audience) || audience.length > String(parent.audience || '').length
+          ? 'narrowed'
+          : 'changed';
+      rows.push({
+        field: 'audience',
+        from: parent.audience || '未定义母本客群',
+        to: audience || '未填写客群',
+        type,
+        reason: type === 'broadened'
+          ? `客群从“${parent.audience}”变成“${audience}”，范围更宽，痛点密度可能下降。`
+          : type === 'narrowed'
+            ? `客群从“${parent.audience}”细分到“${audience}”，人群阶段或痛点更明确。`
+            : `客群从“${parent.audience}”调整为“${audience}”，需要重新验证触达渠道和痛点表达。`,
+        hypothesis: type === 'broadened'
+          ? '如果客群过宽，7 天内更难找到高意愿用户。'
+          : type === 'narrowed'
+            ? '更细分的人群更容易产生明确反馈或付费意向。'
+            : `如果“${audience}”对该问题更敏感，反馈速度会高于母本人群。`,
+        quality: type === 'broadened' ? 'low' : type === 'narrowed' ? 'high' : 'medium'
+      });
+    }
+
+    const skill = String(userInput.skill || '').trim();
+    if (!same(parent.skill, skill)) {
+      const quality = isBroadSkill(skill) ? 'low' : isOutcomeSkill(skill) ? 'high' : 'medium';
+      rows.push({
+        field: 'skill',
+        from: parent.skill || '未定义母本能力',
+        to: skill || '未填写能力',
+        type: 'changed',
+        reason: quality === 'low'
+          ? `“${skill}”仍然偏能力名词，尚未变成可交付结果。`
+          : quality === 'high'
+            ? `“${skill}”包含明确交付或结果线索，能力被改写为可验证产物。`
+            : `能力从“${parent.skill}”调整为“${skill}”，需要用一次最小交付验证用户是否买账。`,
+        hypothesis: quality === 'low'
+          ? '用户不为能力本身付费，而为明确结果付费。'
+          : quality === 'high'
+            ? '结果导向的表达更容易建立付费信任。'
+            : `如果“${skill}”能在短周期内交付可感知结果，用户更可能继续沟通。`,
+        quality
+      });
+    }
+
+    const parentRisk = parent.hypothesis?.risk_type || 'trust';
+    if (!same(parentRisk, userInput.riskKey)) {
+      const riskStrategy = {
+        trust: ['信任风险', '策略是先做低门槛诊断，建立信任。', '如果诊断能让用户看到问题和路径，付费阻力会下降。'],
+        need: ['需求风险', '策略是先做问题访谈，验证需求是否真实。', '如果访谈中重复出现同一痛点，该需求更值得继续实验。'],
+        delivery: ['交付风险', '策略是缩小交付范围，保证结果稳定。', '如果交付范围足够小，7 天内更容易产出可展示结果。']
+      };
+      const selected = riskStrategy[userInput.riskKey] || ['风险假设', `策略调整为：${userInput.riskLabel || userInput.riskKey}`, '新的风险假设需要用本轮证据重新验证。'];
+      rows.push({
+        field: 'risk',
+        from: parentRisk,
+        to: userInput.riskKey,
+        type: 'changed',
+        reason: `最大风险从“${parentRisk}”切换为“${selected[0]}”。${selected[1]}`,
+        hypothesis: selected[2],
+        quality: 'medium'
+      });
+    }
+
+    const goalReason = {
+      '1': ['商业验证', '本轮目标指向拿到真实付费，优先验证报价和信任。', '如果能拿到 1 个付费客户，说明方案具备最小商业闭环。'],
+      '3': ['需求验证', '本轮目标指向完成 3 次访谈，优先验证问题是否真实且高频。', '如果 3 次访谈出现重复痛点，说明值得继续收窄方案。'],
+      '5': ['交付验证', '本轮目标指向招募 5 个体验用户，优先验证交付过程是否稳定。', '如果 5 个体验用户能完成体验并给出反馈，交付模型更可能成立。']
+    };
+    const goal = String(userInput.goal || '');
+    const goalInfo = goalReason[goal] || ['目标变异', `本轮目标调整为“${userInput.goalText || goal}”。`, '目标改变会影响 7 天实验的证据类型。'];
+    const parentGoal = parent.metrics?.success_metric?.name || parent.metric || '';
+    const currentGoal = userInput.goalText || goal;
+    if (!same(parentGoal, currentGoal) && !String(currentGoal).includes(parentGoal) && !String(parentGoal).includes(currentGoal)) {
+      rows.push({
+        field: 'goal',
+        from: parentGoal || '母本成功指标',
+        to: currentGoal,
+        type: 'changed',
+        reason: `${goalInfo[0]}：${goalInfo[1]}`,
+        hypothesis: goalInfo[2],
+        quality: 'medium'
+      });
+    }
+
+    const hours = Number(userInput.hours);
+    const parentHours = Number(parent.experiment?.budget_hours || 10);
+    if (hours !== parentHours) {
+      const hoursInfo = hours <= 5
+        ? ['轻量验证，任务必须更小。', '如果每个动作被压缩到最小，5 小时仍可验证关键假设。', 'medium']
+        : hours >= 20
+          ? ['可增加交付深度，但要警惕 burnout 风险。', '如果投入增加但边界不收紧，实验可能变成过度交付。', 'medium']
+          : ['标准 7 天实验，适合完成访谈、邀约和一次证据复盘。', '10 小时投入能平衡验证速度和执行负担。', 'high'];
+      rows.push({
+        field: 'hours',
+        from: `${parentHours} 小时`,
+        to: `${hours} 小时`,
+        type: 'changed',
+        reason: hoursInfo[0],
+        hypothesis: hoursInfo[1],
+        quality: hoursInfo[2]
+      });
+    }
+
+    const visibleRows = rows.filter(row => row.quality !== 'same');
+    if (!visibleRows.length) {
+      return [{
+        field: 'none',
+        from: '与母本高度相似',
+        to: '未发生有效变异',
+        type: 'same',
+        reason: '未发生有效变异：该 Fork 与母本高度相似。根据 OPC 宪法，这属于低质量 Fork。请至少修改客群、交付物或风险假设之一。',
+        hypothesis: '缺少真实变异时，本轮实验难以产生新的可验证学习。',
+        quality: 'low'
+      }];
+    }
+    return visibleRows;
   }
 
   function renderExperimentSandbox() {
@@ -1017,6 +1339,138 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     if (first) renderDetail(first);
   }
 
+  function generateMutationDiff(parentSpecimen, userInput) {
+    const parent = normalizeSpecimen(parentSpecimen);
+    const clean = value => String(value || '').trim();
+    const same = (a, b) => clean(a) === clean(b);
+    const includesAny = (text, words) => words.some(word => clean(text).includes(word));
+    const parentAudience = clean(parent.audience);
+    const audience = clean(userInput.audience);
+    const parentSkill = clean(parent.skill);
+    const skill = clean(userInput.skill);
+    const rows = [];
+
+    const audienceSignals = ['转码', '非科班', '项目经验', '大二', '大三', '高二', '高三', '初三', '备考', '低分', '提分', '阅读', '口语', '面试', '30 天', '7 天', '新手', '创业者'].filter(word => parentAudience.includes(word));
+    const broadAudienceWords = ['大学生', '年轻人', '职场人', '所有人', '大众', '学生', '用户', '家长'];
+    const narrowAudienceWords = ['转码', '非科班', '项目经验', '大二', '大三', '高二', '高三', '初三', '备考', '低分', '提分', '阅读', '口语', '面试', '30 天', '7 天', '80-100'];
+
+    if (!same(parentAudience, audience)) {
+      const lostSignals = audienceSignals.filter(word => !audience.includes(word));
+      const broadened = includesAny(audience, broadAudienceWords) || audience.length < parentAudience.length * 0.55;
+      const narrowed = !broadened && (includesAny(audience, narrowAudienceWords) || audience.length > parentAudience.length);
+      const type = broadened ? 'broadened' : narrowed ? 'narrowed' : 'changed';
+      rows.push({
+        field: 'audience',
+        from: parentAudience || '未定义母本客群',
+        to: audience || '未填写客群',
+        type,
+        reason: broadened
+          ? `你把“${parentAudience}”压缩成“${audience}”，丢失了${lostSignals.length ? `“${lostSignals.join(' / ')}”这些筛选线索` : '阶段、身份或痛点线索'}，客群变宽后痛点密度会下降。`
+          : narrowed
+            ? `你把母本客群进一步限定为“${audience}”，新增了更明确的阶段、身份或痛点线索。`
+            : `你把客群从“${parentAudience}”换成“${audience}”，这不是简单套用母本，需要重新验证触达渠道和痛点强度。`,
+        hypothesis: broadened
+          ? `如果只用“${audience}”找人，7 天内更可能遇到低意愿泛用户，而不是能立刻反馈的人。`
+          : narrowed
+            ? `如果“${audience}”确实更集中，访谈和付费邀约会更快出现明确反馈。`
+            : `如果“${audience}”对这个问题更敏感，本轮反馈质量会高于母本客群。`,
+        quality: broadened ? 'low' : narrowed ? 'high' : 'medium'
+      });
+    }
+
+    const broadSkillWords = ['写代码', '英语', '设计', '做内容', '编程', '运营', '营销', '咨询'];
+    const outcomeWords = ['7 天', '完成', '诊断', '可展示', '项目', '交付', '结果', '作品', '报告', '清单'];
+    if (!same(parentSkill, skill)) {
+      const broad = broadSkillWords.includes(skill) || skill.length < 6;
+      const outcome = includesAny(skill, outcomeWords);
+      rows.push({
+        field: 'skill',
+        from: parentSkill || '未定义母本能力',
+        to: skill || '未填写能力',
+        type: 'changed',
+        reason: broad
+          ? `“${skill}”只是能力名词，没有说明给谁、解决什么问题、交付什么结果。它还不能支撑一次可收费实验。`
+          : outcome
+            ? `“${skill}”已经包含可交付结果线索，比母本能力更容易被用户理解和评估。`
+            : `“${skill}”改变了交付方向，但仍需要补上可验收的结果形态。`,
+        hypothesis: broad
+          ? `用户不会因为“${skill}”本身付费；如果改成“为${audience || '目标用户'}交付一个可展示的小项目/诊断结果”，信任会更容易建立。`
+          : outcome
+            ? '结果导向的表达更容易建立付费信任。'
+            : '如果交付物能被用户看见、验收和转发，本轮邀约成功率会更高。',
+        quality: broad ? 'low' : outcome ? 'high' : 'medium'
+      });
+    }
+
+    const parentRisk = parent.hypothesis?.risk_type || 'trust';
+    if (!same(parentRisk, userInput.riskKey)) {
+      const riskStrategy = {
+        trust: ['信任风险', '先做低门槛诊断，证明你值得被相信。', '如果诊断能让用户看到问题和路径，付费阻力会下降。'],
+        need: ['需求风险', '先做问题访谈，不急着包装交付物。', '如果访谈中重复出现同一痛点，该需求更值得继续实验。'],
+        delivery: ['交付风险', '缩小交付范围，先保证一个稳定结果。', '如果交付边界足够小，7 天内更容易产出可展示结果。']
+      };
+      const selected = riskStrategy[userInput.riskKey] || ['风险假设', userInput.riskLabel || userInput.riskKey, '新的风险假设需要用本轮证据重新验证。'];
+      rows.push({
+        field: 'risk',
+        from: parentRisk,
+        to: userInput.riskKey,
+        type: 'changed',
+        reason: `风险焦点切到“${selected[0]}”：${selected[1]}`,
+        hypothesis: selected[2],
+        quality: 'medium'
+      });
+    }
+
+    const goalMap = {
+      '1': ['商业验证', '拿到 1 个付费客户', '目标改为真实付费，重点不再是收集意见，而是验证报价、信任和成交。', '如果有人愿意付费，说明这个 Fork 至少具备最小商业闭环。'],
+      '3': ['需求验证', '完成 3 次访谈', '目标改为访谈，重点是确认问题是否真实、高频、足够痛。', '如果 3 次访谈出现重复痛点，下一轮应该继续收窄客群或交付物。'],
+      '5': ['交付验证', '招募 5 个体验用户', '目标改为体验用户，重点是验证交付过程是否稳定。', '如果体验用户能完成体验并给出反馈，交付模型更可能成立。']
+    };
+    const parentGoal = clean(parent.metrics?.success_metric?.name || parent.metric);
+    const goalInfo = goalMap[String(userInput.goal)] || ['目标变异', clean(userInput.goalText), `目标调整为“${clean(userInput.goalText)}”。`, '目标改变会影响本轮应该收集的证据。'];
+    const currentGoal = clean(userInput.goalText || goalInfo[1]);
+    if (!same(parentGoal, currentGoal) && !currentGoal.includes(parentGoal) && !parentGoal.includes(currentGoal)) {
+      rows.push({
+        field: 'goal',
+        from: parentGoal || '母本成功指标',
+        to: currentGoal,
+        type: 'changed',
+        reason: `${goalInfo[0]}：${goalInfo[2]}`,
+        hypothesis: goalInfo[3],
+        quality: 'medium'
+      });
+    }
+
+    const hours = Number(userInput.hours);
+    const parentHours = Number(parent.experiment?.budget_hours || 10);
+    if (hours !== parentHours) {
+      const small = hours <= 5;
+      const large = hours >= 20;
+      rows.push({
+        field: 'hours',
+        from: `${parentHours} 小时`,
+        to: `${hours} 小时`,
+        type: 'changed',
+        reason: small ? '投入降为 5 小时，实验动作必须压缩到一次触达、一次访谈或一次最小交付。' : large ? '投入升到 20 小时，可以增加交付深度，但也更容易过度打磨。' : '10 小时是标准 7 天实验强度，适合完成触达、访谈、邀约和复盘。',
+        hypothesis: small ? '如果动作足够小，低投入也能验证关键假设。' : large ? '如果不设置边界，更多时间会带来 burnout 风险，而不是更高质量证据。' : '标准投入能平衡验证速度和执行负担。',
+        quality: large ? 'medium' : 'high'
+      });
+    }
+
+    if (!rows.length) {
+      return [{
+        field: 'none',
+        from: '与母本高度相似',
+        to: '未发生有效变异',
+        type: 'same',
+        reason: '未发生有效变异：该 Fork 与母本高度相似。根据 OPC 宪法，这属于低质量 Fork。请至少修改客群、交付物或风险假设之一。',
+        hypothesis: '缺少真实变异时，本轮实验难以产生新的可验证学习。',
+        quality: 'low'
+      }];
+    }
+    return rows;
+  }
+
   function buildForkExportJSON() {
     if (!currentFork) return null;
     const parent = normalizeSpecimen(specimens.find(item => item.id === currentFork.parent) || defaultSpecimen);
@@ -1151,8 +1605,16 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
       delivery: ['你是否能稳定交付可感知结果', '先做一次最小体验交付', '体验后推荐意愿']
     };
     const risk = riskMap[$('risk').value];
-    const audit = auditExperiment(parent, skillRaw, audienceRaw, hours, risk, target);
-    const mutationDiff = buildMutationDiff(parent, skillRaw, audienceRaw, risk);
+    const mutationDiff = generateMutationDiff(parent, {
+      audience: audienceRaw,
+      skill: skillRaw,
+      riskKey: $('risk').value,
+      riskLabel: $('risk').selectedOptions[0].text,
+      goal: $('goal').value,
+      goalText,
+      hours
+    });
+    const audit = auditExperiment(parent, skillRaw, audienceRaw, hours, risk, target, mutationDiff);
     const slug = Math.random().toString(36).slice(2, 6);
     const forkId = `opc-${slug}-v0.1`;
     const tasks = [
@@ -1181,7 +1643,7 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
       <div class="section"><div class="section-title"><i></i>这次 Fork 要验证什么</div>
       <div class="gene"><b style="color:var(--orange)">最大风险假设</b>${risk[0]}。策略：${risk[1]}。唯一北极星指标：<span style="color:var(--green)">${risk[2]}</span>。</div></div>
       <div class="section"><div class="section-title"><i></i>变异记录 Mutation Diff</div>
-      <div class="tasks">${mutationDiff.map(row => `<div class="task"><span class="day">${escapeHtml(row.field)}</span><span><b>${escapeHtml(row.from)}</b><small>→ ${escapeHtml(row.to)}<br>原因：${escapeHtml(row.reason)}<br>假设：${escapeHtml(row.hypothesis)}</small></span><span class="metric">${row.field === 'none' ? '低质量' : '变异'}</span></div>`).join('')}</div></div>
+      <div class="tasks">${mutationDiff.map(row => `<div class="task"><span class="day">${escapeHtml(row.field)}</span><span><b>${escapeHtml(row.from)}</b><small>→ ${escapeHtml(row.to)}<br>原因：${escapeHtml(row.reason)}<br>假设：${escapeHtml(row.hypothesis)}</small></span><span class="metric">${row.quality === 'high' ? '高质量' : row.quality === 'medium' ? '中质量' : '低质量'}</span></div>`).join('')}</div></div>
       <div class="section"><div class="section-title"><i></i>7 天最小经营实验</div>
       <div class="tasks">${tasks.map(t => `<div class="task"><span class="day">D${t[0]}</span><span><b>${t[1]}</b><small>${t[2]}</small></span><span class="metric">${t[3]}</span></div>`).join('')}</div></div>
       <div class="section"><div class="section-title"><i></i>7 天实验实时沙盘 <span id="sandbox-day" class="tag">Day 0/7</span></div>
