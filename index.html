@@ -970,6 +970,13 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
   }
 
   function renderDecisionMap(parent, skill, audience, risk) {
+    const mapSection = $('decision-map')?.closest('.section');
+    if (mapSection && !mapSection.querySelector('.decision-map-note')) {
+      const note = document.createElement('p');
+      note.className = 'sub decision-map-note';
+      note.textContent = '决策图谱展示一次 OPC 实验从首批客群、风险假设、交付物、证据资产到北极星指标的关系，避免实验只是一张任务清单。';
+      mapSection.querySelector('.flow-map')?.before(note);
+    }
     const nodes = [
       { color: 'green', size: 3, title: '首批客群', detail: audience, why: '决定先接触谁，避免把实验做成泛泛的方案。' },
       { color: 'green', size: 2, title: '小红书/朋友圈', detail: `${audience} 的低成本触达入口`, why: '优先使用不需要额外预算的获客渠道。' },
@@ -1082,6 +1089,27 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
     $('template-contact').onclick = () => alert(parent.author.contact || '作者暂未提供联系方式');
   }
 
+  function buildTemplateMode() {
+    const parent = normalizeSpecimen(selectedSpecimen());
+    $('empty').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('result-actions').classList.add('hidden');
+    $('result').innerHTML = `
+      <div class="fork-head"><div><div class="fork-id">Template Mode ← ${escapeHtml(parent.id)}</div><h2>${escapeHtml(parent.name)}</h2><p class="sub">当前为模板模式：仅用于理解母本方案，不计入完整实验，不更新母本实验权重。</p></div></div>
+      <div class="constitution">这不是完整实验。你可以先复制母本结构、理解适用边界；如果准备真实执行，再升级为 7 天实验模式。</div>
+      <div class="section"><div class="section-title"><i></i>母本摘要</div><div class="gene"><b>假设</b>${escapeHtml(parent.hypothesis.statement)}<br><b>客群</b>${escapeHtml(parent.audience)}<br><b>核心能力</b>${escapeHtml(parent.skill)}</div></div>
+      <div class="section"><div class="section-title"><i></i>可复制话术 / 行动清单</div><div class="tasks">${parent.actions.map(a => `<div class="task"><span class="day">D${a.day || 1}</span><span><b>${escapeHtml(a.title)}</b><small>${escapeHtml(a.detail || parent.action)}</small></span><span class="metric">${escapeHtml(a.metric || parent.metric)}</span></div>`).join('')}</div></div>
+      <div class="section"><div class="section-title"><i></i>适用条件 / 失败信号</div><div class="boundary"><div class="fit"><b>适用条件</b>${escapeHtml(parent.fit)}</div><div class="fail"><b>失败信号</b>${escapeHtml(parent.fail)}</div></div></div>
+      <div class="action-row"><button class="primary" id="upgrade-experiment">升级为 7 天实验</button><button class="ghost" id="copy-template">复制模板内容</button><button class="ghost" id="template-contact">联系母本作者</button></div>
+      <div id="template-status" class="status"></div>`;
+    $('upgrade-experiment').onclick = () => { document.querySelector('input[name="fork-mode"][value="experiment"]').checked = true; updateGenerateButtonText(); showRedTeam(); };
+    $('copy-template').onclick = () => {
+      navigator.clipboard?.writeText(`${parent.name}\n假设：${parent.hypothesis.statement}\n行动：${parent.action}\n指标：${parent.metric}`);
+      $('template-status').textContent = '模板内容已复制。';
+    };
+    $('template-contact').onclick = () => alert(parent.author.contact || '作者暂未提供联系方式');
+  }
+
   function showRedTeam() {
     const skill = $('skill').value.trim() || '你的核心能力';
     const audience = $('audience').value.trim() || '第一批客户';
@@ -1096,6 +1124,8 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
       <div class="redteam-card"><b>嫉妒的同行</b><p>“${escapeHtml(audience)} 这个人群已经有人服务了，你凭什么还有机会？”</p><textarea id="red-rival" placeholder="写下你的差异化：人群、交付、资产三选一"></textarea></div>
       <div class="action-row"><button class="ghost" id="red-apply">把红队建议写回输入</button><button class="primary" id="red-continue">通过红队，生成 7 天沙盘</button></div>
       <div id="red-status" class="status"></div>`;
+    $('result').querySelector('.fork-head h2').textContent = '红队攻击模拟器';
+    $('result').querySelector('.fork-head .sub').textContent = '在生成 7 天实验前，先模拟客户、成本和竞争对手的质疑，避免生成自嗨方案。';
     $('red-apply').onclick = () => {
       const rival = $('red-rival').value.trim();
       const customer = $('red-customer').value.trim();
