@@ -234,7 +234,7 @@
         <label>最大风险假设</label>
         <select id="risk"><option value="trust">客户不相信我值得付费</option><option value="need">客户可能根本没有这个需求</option><option value="delivery">我可能无法稳定交付结果</option></select>
         <div id="live-feedback" class="live-feedback"></div>
-        <button class="primary" id="generate">Fork 母本，生成 7 天实验 →</button>
+        <button class="primary" id="generate">生成模板手册 →</button>
       </section>
 
       <section class="card">
@@ -1044,6 +1044,11 @@ success_metric: ${escapeHtml(reverseDraft.metric)}</pre>`;
   }
 
   const getForkMode = () => document.querySelector('input[name="fork-mode"]:checked')?.value || 'template';
+  function updateGenerateButtonText() {
+    $('generate').textContent = getForkMode() === 'template' ? '生成模板手册 →' : '生成 7 天实验 →';
+  }
+  document.querySelectorAll('input[name="fork-mode"]').forEach(input => input.onchange = updateGenerateButtonText);
+  updateGenerateButtonText();
   $('generate').onclick = () => {
     const parent = selectedSpecimen();
     const validation = validateSpecimen(parent);
